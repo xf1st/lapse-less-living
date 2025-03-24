@@ -9,23 +9,79 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          achieved_at: string | null
+          days: number
+          habit_id: string
+          id: string
+          type: string
+          user_id: string
+          viewed: boolean | null
+        }
+        Insert: {
+          achieved_at?: string | null
+          days: number
+          habit_id: string
+          id?: string
+          type: string
+          user_id: string
+          viewed?: boolean | null
+        }
+        Update: {
+          achieved_at?: string | null
+          days?: number
+          habit_id?: string
+          id?: string
+          type?: string
+          user_id?: string
+          viewed?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "achievements_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_users: {
+        Row: {
+          created_at: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
       habit_entries: {
         Row: {
           completed_at: string | null
           habit_id: string
           id: string
+          is_relapse: boolean | null
           notes: string | null
         }
         Insert: {
           completed_at?: string | null
           habit_id: string
           id?: string
+          is_relapse?: boolean | null
           notes?: string | null
         }
         Update: {
           completed_at?: string | null
           habit_id?: string
           id?: string
+          is_relapse?: boolean | null
           notes?: string | null
         }
         Relationships: [
@@ -42,32 +98,71 @@ export type Database = {
         Row: {
           color: string | null
           created_at: string | null
+          current_streak: number | null
           description: string | null
           frequency: string
           id: string
+          longest_streak: number | null
           name: string
+          plan_id: string | null
+          start_date: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           color?: string | null
           created_at?: string | null
+          current_streak?: number | null
           description?: string | null
           frequency: string
           id?: string
+          longest_streak?: number | null
           name: string
+          plan_id?: string | null
+          start_date?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           color?: string | null
           created_at?: string | null
+          current_streak?: number | null
           description?: string | null
           frequency?: string
           id?: string
+          longest_streak?: number | null
           name?: string
+          plan_id?: string | null
+          start_date?: string | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      plans: {
+        Row: {
+          has_achievements: boolean | null
+          has_statistics: boolean | null
+          id: string
+          max_habits: number
+          name: string
+          price: number | null
+        }
+        Insert: {
+          has_achievements?: boolean | null
+          has_statistics?: boolean | null
+          id: string
+          max_habits: number
+          name: string
+          price?: number | null
+        }
+        Update: {
+          has_achievements?: boolean | null
+          has_statistics?: boolean | null
+          id?: string
+          max_habits?: number
+          name?: string
+          price?: number | null
         }
         Relationships: []
       }
@@ -97,7 +192,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,33 +7,14 @@ import { useToast } from "@/hooks/use-toast";
 import {
   PlusCircle,
   Calendar,
-  CheckCircle2,
-  X,
-  Trash2,
-  Edit,
   LogOut,
   BarChart3,
   Menu,
   Home,
+  Trophy,
+  ShieldCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import {
   Sheet,
   SheetContent,
@@ -42,64 +23,85 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 import { Loader } from "@/components/ui/loader";
-
-type Habit = {
-  id: string;
-  name: string;
-  description: string | null;
-  frequency: string;
-  color: string;
-  created_at: string;
-};
+import HabitCard, { Habit } from "@/components/habits/HabitCard";
+import HabitForm from "@/components/habits/HabitForm";
+import ProgressCalendar from "@/components/habits/ProgressCalendar";
+import Stats from "@/components/habits/Stats";
+import Achievements from "@/components/habits/Achievements";
+import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 type HabitEntry = {
   id: string;
   habit_id: string;
   completed_at: string;
   notes: string | null;
+  is_relapse: boolean;
+};
+
+type Plan = {
+  id: string;
+  name: string;
+  max_habits: number;
+  has_statistics: boolean;
+  has_achievements: boolean;
+  price: number;
+};
+
+const SortableHabitCard = ({ habit, isCompleted, onToggleCompletion, onDelete }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: habit.id });
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <HabitCard
+        habit={habit}
+        isCompleted={isCompleted}
+        onToggleCompletion={onToggleCompletion}
+        onDelete={onDelete}
+        onReorderStart={() => listeners && attributes}
+      />
+    </div>
+  );
 };
 
 const Dashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [habitEntries, setHabitEntries] = useState<HabitEntry[]>([]);
+  const [userPlan, setUserPlan] = useState<Plan | null>(null);
   const [loading, setLoading] = useState(true);
   const [newHabitOpen, setNewHabitOpen] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    frequency: "daily",
-    color: "blue",
-  });
   const { toast } = useToast();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   // Redirect if not authenticated
   if (!user && !authLoading) {
     return <Navigate to="/auth" />;
   }
 
-  useEffect(() => {
-    if (user) {
-      fetchHabits();
-      fetchHabitEntries();
-    }
-  }, [user]);
-
-  const fetchHabits = async () => {
+  const fetchHabits = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("habits")
@@ -122,9 +124,9 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const fetchHabitEntries = async () => {
+  const fetchHabitEntries = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("habit_entries")
@@ -137,6 +139,9 @@ const Dashboard = () => {
 
       if (data) {
         setHabitEntries(data);
+        
+        // After loading entries, update streaks
+        updateStreaks(data);
       }
     } catch (error: any) {
       toast({
@@ -145,42 +150,174 @@ const Dashboard = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
 
-  const createHabit = async () => {
+  const fetchUserPlan = useCallback(async () => {
     try {
-      const { error } = await supabase.from("habits").insert({
-        name: formData.name,
-        description: formData.description || null,
-        frequency: formData.frequency,
-        color: formData.color,
-        user_id: user?.id,
-      });
+      // First, get the user's plan_id from the habits table
+      const { data: habitData, error: habitError } = await supabase
+        .from("habits")
+        .select("plan_id")
+        .limit(1);
 
-      if (error) {
-        throw error;
+      let planId = "basic"; // Default plan
+      
+      if (!habitError && habitData && habitData.length > 0 && habitData[0].plan_id) {
+        planId = habitData[0].plan_id;
+      }
+      
+      // Then, get the plan details
+      const { data: planData, error: planError } = await supabase
+        .from("plans")
+        .select("*")
+        .eq("id", planId)
+        .single();
+
+      if (planError) {
+        throw planError;
       }
 
-      toast({
-        title: "Привычка создана",
-        description: "Новая привычка успешно добавлена",
-      });
-
-      setFormData({
-        name: "",
-        description: "",
-        frequency: "daily",
-        color: "blue",
-      });
-      setNewHabitOpen(false);
-      fetchHabits();
+      if (planData) {
+        setUserPlan(planData);
+      }
     } catch (error: any) {
-      toast({
-        title: "Ошибка создания привычки",
-        description: error.message,
-        variant: "destructive",
+      // If error, set to basic plan
+      setUserPlan({
+        id: "basic",
+        name: "Базовый",
+        max_habits: 3,
+        has_statistics: false,
+        has_achievements: false,
+        price: 0
       });
     }
+  }, []);
+
+  const updateStreaks = async (entries: HabitEntry[]) => {
+    try {
+      // Group entries by habit_id
+      const entriesByHabit = {};
+      entries.forEach(entry => {
+        if (!entriesByHabit[entry.habit_id]) {
+          entriesByHabit[entry.habit_id] = [];
+        }
+        entriesByHabit[entry.habit_id].push(entry);
+      });
+
+      // For each habit, calculate current streak and longest streak
+      for (const habit of habits) {
+        const habitEntries = entriesByHabit[habit.id] || [];
+        
+        // Sort entries by date (newest first)
+        habitEntries.sort((a, b) => 
+          new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
+        );
+
+        // Find the most recent relapse (if any)
+        const lastRelapse = habitEntries.find(entry => entry.is_relapse);
+        const lastRelapseDate = lastRelapse 
+          ? new Date(lastRelapse.completed_at) 
+          : new Date(0); // If no relapse, use epoch time
+        
+        // Count current streak (days since last relapse)
+        const entriesAfterRelapse = habitEntries.filter(entry => 
+          !entry.is_relapse && new Date(entry.completed_at) > lastRelapseDate
+        );
+        
+        const currentStreak = entriesAfterRelapse.length;
+        
+        // Find longest streak
+        let longestStreak = habit.longest_streak || 0;
+        if (currentStreak > longestStreak) {
+          longestStreak = currentStreak;
+        }
+        
+        // Update habit with new streak information
+        if (habit.current_streak !== currentStreak || habit.longest_streak !== longestStreak) {
+          await supabase
+            .from("habits")
+            .update({
+              current_streak: currentStreak,
+              longest_streak: longestStreak
+            })
+            .eq("id", habit.id);
+        }
+        
+        // Check for achievements
+        if (currentStreak > 0) {
+          checkForAchievements(habit.id, currentStreak);
+        }
+      }
+      
+      // Refresh habits to get updated streak info
+      fetchHabits();
+    } catch (error: any) {
+      console.error("Error updating streaks:", error);
+    }
+  };
+
+  const checkForAchievements = async (habitId: string, currentStreak: number) => {
+    if (!userPlan?.has_achievements) return;
+    
+    try {
+      // Define milestone days for achievements
+      const milestones = [1, 7, 30, 90, 180, 365];
+      
+      // Find the highest achieved milestone
+      const milestone = milestones.find(m => currentStreak >= m && milestones.indexOf(m) === milestones.findIndex(x => currentStreak >= x));
+      
+      if (milestone) {
+        // Define achievement type based on milestone
+        let achievementType;
+        switch (milestone) {
+          case 1: achievementType = "first_day"; break;
+          case 7: achievementType = "first_week"; break;
+          case 30: achievementType = "first_month"; break;
+          case 90: achievementType = "three_months"; break;
+          case 180: achievementType = "six_months"; break;
+          case 365: achievementType = "one_year"; break;
+          default: achievementType = "custom";
+        }
+        
+        // Check if achievement already exists
+        const { data: existingAchievements, error: checkError } = await supabase
+          .from("achievements")
+          .select("*")
+          .eq("habit_id", habitId)
+          .eq("type", achievementType);
+        
+        if (checkError) throw checkError;
+        
+        // If achievement doesn't exist, create it
+        if (!existingAchievements || existingAchievements.length === 0) {
+          const { error: insertError } = await supabase
+            .from("achievements")
+            .insert({
+              user_id: user?.id,
+              habit_id: habitId,
+              type: achievementType,
+              days: milestone,
+              viewed: false
+            });
+          
+          if (insertError) throw insertError;
+        }
+      }
+    } catch (error: any) {
+      console.error("Error checking achievements:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchHabits();
+      fetchHabitEntries();
+      fetchUserPlan();
+    }
+  }, [user, fetchHabits, fetchHabitEntries, fetchUserPlan]);
+
+  const createHabit = () => {
+    setNewHabitOpen(true);
   };
 
   const toggleHabitCompletion = async (habitId: string) => {
@@ -190,7 +327,8 @@ const Dashboard = () => {
       const existingEntry = habitEntries.find(
         (entry) =>
           entry.habit_id === habitId &&
-          entry.completed_at.split("T")[0] === today
+          entry.completed_at.split("T")[0] === today &&
+          !entry.is_relapse
       );
 
       if (existingEntry) {
@@ -211,6 +349,7 @@ const Dashboard = () => {
         const { error } = await supabase.from("habit_entries").insert({
           habit_id: habitId,
           completed_at: new Date().toISOString(),
+          is_relapse: false
         });
 
         if (error) throw error;
@@ -259,41 +398,24 @@ const Dashboard = () => {
     const today = new Date().toISOString().split("T")[0];
     return habitEntries.some(
       (entry) =>
-        entry.habit_id === habitId && entry.completed_at.split("T")[0] === today
+        entry.habit_id === habitId && 
+        entry.completed_at.split("T")[0] === today &&
+        !entry.is_relapse
     );
   };
 
-  const getColorClass = (color: string) => {
-    switch (color) {
-      case "blue":
-        return "bg-blue-500";
-      case "green":
-        return "bg-green-500";
-      case "red":
-        return "bg-red-500";
-      case "purple":
-        return "bg-purple-500";
-      case "yellow":
-        return "bg-yellow-500";
-      case "indigo":
-        return "bg-indigo-500";
-      case "pink":
-        return "bg-pink-500";
-      default:
-        return "bg-blue-500";
-    }
-  };
-
-  const formatFrequency = (frequency: string) => {
-    switch (frequency) {
-      case "daily":
-        return "Ежедневно";
-      case "weekly":
-        return "Еженедельно";
-      case "monthly":
-        return "Ежемесячно";
-      default:
-        return frequency;
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (active.id !== over?.id) {
+      setHabits((habits) => {
+        const oldIndex = habits.findIndex((h) => h.id === active.id);
+        const newIndex = habits.findIndex((h) => h.id === over?.id);
+        
+        return arrayMove(habits, oldIndex, newIndex);
+      });
+      
+      // You can also update the order in the database here if needed
     }
   };
 
@@ -336,6 +458,13 @@ const Dashboard = () => {
             Статистика
           </a>
           <a
+            href="/dashboard"
+            className="flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:text-brand-blue hover:bg-gray-100 rounded-md"
+          >
+            <Trophy className="mr-3 h-5 w-5" />
+            Достижения
+          </a>
+          <a
             href="/"
             className="flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:text-brand-blue hover:bg-gray-100 rounded-md"
           >
@@ -343,7 +472,19 @@ const Dashboard = () => {
             На главную
           </a>
         </nav>
-        <div className="border-t border-gray-200 p-4">
+        <div className="p-4 border-t border-gray-200">
+          <div className="mb-4 p-2 bg-blue-50 rounded-md flex items-center justify-between">
+            <div className="flex items-center">
+              <ShieldCheck className="h-5 w-5 text-brand-blue mr-2" />
+              <div>
+                <p className="text-xs font-medium text-gray-700">Ваш тариф:</p>
+                <p className="text-sm font-semibold text-brand-blue">{userPlan?.name || "Базовый"}</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" className="text-xs h-7">
+              Обновить
+            </Button>
+          </div>
           <Button
             variant="ghost"
             onClick={() => signOut()}
@@ -391,6 +532,18 @@ const Dashboard = () => {
                 {user?.email}
               </SheetDescription>
             </SheetHeader>
+            <div className="mt-4 p-2 bg-blue-50 rounded-md flex items-center justify-between">
+              <div className="flex items-center">
+                <ShieldCheck className="h-5 w-5 text-brand-blue mr-2" />
+                <div>
+                  <p className="text-xs font-medium text-gray-700">Ваш тариф:</p>
+                  <p className="text-sm font-semibold text-brand-blue">{userPlan?.name || "Базовый"}</p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" className="text-xs h-7">
+                Обновить
+              </Button>
+            </div>
             <nav className="mt-6 flex flex-col space-y-1">
               <a
                 href="/dashboard"
@@ -407,6 +560,14 @@ const Dashboard = () => {
               >
                 <BarChart3 className="mr-3 h-5 w-5" />
                 Статистика
+              </a>
+              <a
+                href="/dashboard"
+                className="flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:text-brand-blue hover:bg-gray-100 rounded-md"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                <Trophy className="mr-3 h-5 w-5" />
+                Достижения
               </a>
               <a
                 href="/"
@@ -437,112 +598,39 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 md:px-8">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-gray-900">Мои привычки</h1>
-            <Dialog open={newHabitOpen} onOpenChange={setNewHabitOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-brand-blue hover:bg-brand-blue/90">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Новая привычка
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Создать новую привычку</DialogTitle>
-                  <DialogDescription>
-                    Добавьте привычку, от которой хотите избавиться
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="habit-name">Название привычки</Label>
-                    <Input
-                      id="habit-name"
-                      placeholder="Напр., Курение"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          name: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="habit-description">Описание (опционально)</Label>
-                    <Textarea
-                      id="habit-description"
-                      placeholder="Опишите привычку подробнее"
-                      value={formData.description}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          description: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="habit-frequency">Частота</Label>
-                      <Select
-                        value={formData.frequency}
-                        onValueChange={(value) =>
-                          setFormData({
-                            ...formData,
-                            frequency: value,
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Выберите частоту" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="daily">Ежедневно</SelectItem>
-                          <SelectItem value="weekly">Еженедельно</SelectItem>
-                          <SelectItem value="monthly">Ежемесячно</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="habit-color">Цвет</Label>
-                      <Select
-                        value={formData.color}
-                        onValueChange={(value) =>
-                          setFormData({
-                            ...formData,
-                            color: value,
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Выберите цвет" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="blue">Синий</SelectItem>
-                          <SelectItem value="green">Зеленый</SelectItem>
-                          <SelectItem value="red">Красный</SelectItem>
-                          <SelectItem value="purple">Фиолетовый</SelectItem>
-                          <SelectItem value="yellow">Желтый</SelectItem>
-                          <SelectItem value="indigo">Индиго</SelectItem>
-                          <SelectItem value="pink">Розовый</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => setNewHabitOpen(false)}
-                  >
-                    Отмена
-                  </Button>
-                  <Button onClick={createHabit} className="bg-brand-blue hover:bg-brand-blue/90">
-                    Создать
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <Button 
+              onClick={createHabit}
+              className="bg-brand-blue hover:bg-brand-blue/90"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Новая привычка
+            </Button>
           </div>
+
+          {/* Stats and Achievements Section */}
+          {habits.length > 0 && (
+            <>
+              <Stats 
+                habits={habits} 
+                entries={habitEntries} 
+                canViewStats={!!userPlan?.has_statistics} 
+              />
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <ProgressCalendar 
+                  habits={habits} 
+                  entries={habitEntries} 
+                  onEntriesChange={fetchHabitEntries}
+                  canViewStats={!!userPlan?.has_statistics}
+                />
+                
+                <Achievements 
+                  habits={habits} 
+                  canViewAchievements={!!userPlan?.has_achievements} 
+                />
+              </div>
+            </>
+          )}
 
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
@@ -550,50 +638,30 @@ const Dashboard = () => {
               <p className="text-gray-500">Загрузка привычек...</p>
             </div>
           ) : habits.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {habits.map((habit) => (
-                <Card key={habit.id} className="shadow-sm border hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center space-x-3">
-                      <div className={cn("w-4 h-4 rounded-full", getColorClass(habit.color))}></div>
-                      <CardTitle className="text-xl">{habit.name}</CardTitle>
-                    </div>
-                    <CardDescription>
-                      {formatFrequency(habit.frequency)}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {habit.description && <p className="text-gray-600">{habit.description}</p>}
-                  </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <Button
-                      variant={isHabitCompletedToday(habit.id) ? "destructive" : "outline"}
-                      size="sm"
-                      onClick={() => toggleHabitCompletion(habit.id)}
-                    >
-                      {isHabitCompletedToday(habit.id) ? (
-                        <>
-                          <X className="mr-1 h-4 w-4" />
-                          Сбросить
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle2 className="mr-1 h-4 w-4" />
-                          Отметить
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteHabit(habit.id)}
-                      className="text-gray-500 hover:text-red-500"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Отслеживаемые привычки</h2>
+              <DndContext 
+                sensors={sensors} 
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext 
+                  items={habits.map(habit => habit.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {habits.map((habit) => (
+                      <SortableHabitCard
+                        key={habit.id}
+                        habit={habit}
+                        isCompleted={isHabitCompletedToday(habit.id)}
+                        onToggleCompletion={toggleHabitCompletion}
+                        onDelete={deleteHabit}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             </div>
           ) : (
             <div className="text-center py-12">
@@ -605,7 +673,7 @@ const Dashboard = () => {
                 Создайте свою первую привычку, от которой хотите избавиться, и начните отслеживать свой прогресс
               </p>
               <Button
-                onClick={() => setNewHabitOpen(true)}
+                onClick={createHabit}
                 className="bg-brand-blue hover:bg-brand-blue/90"
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -619,12 +687,21 @@ const Dashboard = () => {
       {/* Mobile add button */}
       <div className="md:hidden fixed bottom-6 right-6">
         <Button
-          onClick={() => setNewHabitOpen(true)}
+          onClick={createHabit}
           className="h-14 w-14 rounded-full shadow-lg bg-brand-blue hover:bg-brand-blue/90"
         >
           <PlusCircle className="h-6 w-6" />
         </Button>
       </div>
+
+      {/* Add Habit Form Dialog */}
+      <HabitForm 
+        isOpen={newHabitOpen} 
+        onClose={() => setNewHabitOpen(false)} 
+        onSuccess={fetchHabits}
+        maxHabits={userPlan?.max_habits || 3}
+        currentHabitsCount={habits.length}
+      />
     </div>
   );
 };
