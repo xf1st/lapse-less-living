@@ -1,8 +1,10 @@
 
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Tooltip,
@@ -15,6 +17,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,7 +41,7 @@ const Navbar = () => {
     >
       <div className="container max-w-7xl mx-auto px-4 md:px-6 flex items-center justify-between">
         <div className="flex items-center">
-          <a href="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 flex items-center justify-center shadow-lg shadow-blue-500/20 animate-pulse-subtle">
               <div className="w-3 h-3 rounded-full bg-white"></div>
             </div>
@@ -48,7 +51,7 @@ const Navbar = () => {
             )}>
               LapseLess
             </span>
-          </a>
+          </Link>
         </div>
 
         {!isMobile ? (
@@ -115,12 +118,36 @@ const Navbar = () => {
         <div className="flex items-center gap-4">
           {!isMobile ? (
             <>
-              <Button variant="ghost" size="sm" className="rounded-full font-medium hover:bg-gray-100 transition-all">
-                Войти
-              </Button>
-              <Button size="sm" className="rounded-full bg-brand-blue hover:bg-brand-blue/90 btn-hover-effect animate-pulse-subtle">
-                Регистрация
-              </Button>
+              {user ? (
+                <>
+                  <Link to="/dashboard">
+                    <Button size="sm" className="rounded-full bg-brand-blue hover:bg-brand-blue/90 btn-hover-effect animate-pulse-subtle">
+                      Мои привычки
+                    </Button>
+                  </Link>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="rounded-full font-medium hover:bg-gray-100 transition-all"
+                    onClick={() => signOut()}
+                  >
+                    Выйти
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/auth">
+                    <Button variant="ghost" size="sm" className="rounded-full font-medium hover:bg-gray-100 transition-all">
+                      Войти
+                    </Button>
+                  </Link>
+                  <Link to="/auth?tab=register">
+                    <Button size="sm" className="rounded-full bg-brand-blue hover:bg-brand-blue/90 btn-hover-effect animate-pulse-subtle">
+                      Регистрация
+                    </Button>
+                  </Link>
+                </>
+              )}
             </>
           ) : (
             <Button
@@ -155,12 +182,38 @@ const Navbar = () => {
               Контакты
             </a>
             <div className="flex flex-col gap-2 pt-2 border-t">
-              <Button variant="ghost" size="sm" className="justify-center">
-                Войти
-              </Button>
-              <Button size="sm" className="justify-center bg-brand-blue hover:bg-brand-blue/90">
-                Регистрация
-              </Button>
+              {user ? (
+                <>
+                  <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                    <Button className="justify-center w-full bg-brand-blue hover:bg-brand-blue/90">
+                      Мои привычки
+                    </Button>
+                  </Link>
+                  <Button 
+                    variant="ghost" 
+                    className="justify-center w-full"
+                    onClick={() => {
+                      signOut();
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    Выйти
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="ghost" className="justify-center w-full">
+                      Войти
+                    </Button>
+                  </Link>
+                  <Link to="/auth?tab=register" onClick={() => setMobileMenuOpen(false)}>
+                    <Button className="justify-center w-full bg-brand-blue hover:bg-brand-blue/90">
+                      Регистрация
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
