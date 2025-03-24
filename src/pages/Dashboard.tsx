@@ -54,6 +54,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { Loader } from "@/components/ui/loader";
 
 type Habit = {
   id: string;
@@ -296,6 +297,15 @@ const Dashboard = () => {
     }
   };
 
+  // Show main loader when authenticating
+  if (authLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <Loader size="lg" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar (desktop) */}
@@ -535,23 +545,9 @@ const Dashboard = () => {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
-                <Card key={i} className="shadow-sm border animate-pulse">
-                  <CardHeader className="pb-3">
-                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <div className="h-9 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-9 bg-gray-200 rounded w-1/4"></div>
-                  </CardFooter>
-                </Card>
-              ))}
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader size="lg" className="mb-4" />
+              <p className="text-gray-500">Загрузка привычек...</p>
             </div>
           ) : habits.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
