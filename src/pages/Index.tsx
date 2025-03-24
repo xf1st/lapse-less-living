@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import FeatureCards from "@/components/FeatureCards";
@@ -9,6 +9,8 @@ import Support from "@/components/Support";
 import Footer from "@/components/Footer";
 
 const Index = () => {
+  const [sectionsVisible, setSectionsVisible] = useState({});
+
   useEffect(() => {
     // Add smooth scroll effect
     const handleAnchorClick = (e: MouseEvent) => {
@@ -27,7 +29,38 @@ const Index = () => {
     };
 
     document.addEventListener('click', handleAnchorClick);
-    return () => document.removeEventListener('click', handleAnchorClick);
+
+    // Create intersaction observer for animations
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1,
+    };
+
+    const handleIntersect = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setSectionsVisible(prev => ({
+            ...prev,
+            [entry.target.id]: true
+          }));
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(handleIntersect, observerOptions);
+    
+    // Observe all sections
+    document.querySelectorAll('section').forEach(section => {
+      if (section.id) {
+        observer.observe(section);
+      }
+    });
+    
+    return () => {
+      document.removeEventListener('click', handleAnchorClick);
+      observer.disconnect();
+    };
   }, []);
 
   return (
@@ -37,17 +70,21 @@ const Index = () => {
       <main>
         <HeroSection />
         
-        <FeatureCards />
+        <section id="feature-cards">
+          <FeatureCards />
+        </section>
         
-        <Philosophy />
+        <section id="philosophy">
+          <Philosophy />
+        </section>
         
-        <div id="features">
+        <section id="features">
           <Features />
-        </div>
+        </section>
         
-        <div id="contact">
+        <section id="contact">
           <Support />
-        </div>
+        </section>
       </main>
       
       <Footer />

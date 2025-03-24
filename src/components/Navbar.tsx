@@ -4,6 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -33,12 +39,12 @@ const Navbar = () => {
       <div className="container max-w-7xl mx-auto px-4 md:px-6 flex items-center justify-between">
         <div className="flex items-center">
           <a href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-brand-blue flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 flex items-center justify-center shadow-lg shadow-blue-500/20 animate-pulse-subtle">
               <div className="w-3 h-3 rounded-full bg-white"></div>
             </div>
             <span className={cn(
-              "font-semibold text-xl transition-colors duration-300",
-              scrolled ? "text-brand-darkBlue" : "text-brand-blue"
+              "font-semibold text-xl transition-colors duration-300 bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent",
+              scrolled ? "from-brand-darkBlue to-brand-blue" : "from-blue-700 to-blue-500"
             )}>
               LapseLess
             </span>
@@ -46,32 +52,73 @@ const Navbar = () => {
         </div>
 
         {!isMobile ? (
-          <nav className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm font-medium text-gray-600 hover:text-brand-blue transition-colors">
-              Возможности
-            </a>
-            <a href="#how-it-works" className="text-sm font-medium text-gray-600 hover:text-brand-blue transition-colors">
-              Как это работает
-            </a>
-            <a href="#pricing" className="text-sm font-medium text-gray-600 hover:text-brand-blue transition-colors">
-              Тарифы
-            </a>
-            <a href="#philosophy" className="text-sm font-medium text-gray-600 hover:text-brand-blue transition-colors">
-              Философия
-            </a>
-            <a href="#contact" className="text-sm font-medium text-gray-600 hover:text-brand-blue transition-colors">
-              Контакты
-            </a>
-          </nav>
+          <TooltipProvider>
+            <nav className="hidden md:flex items-center gap-8">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a href="#features" className="text-sm font-medium text-gray-600 hover:text-brand-blue transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-brand-blue after:transition-all after:duration-300">
+                    Возможности
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Узнайте о наших функциях</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a href="#how-it-works" className="text-sm font-medium text-gray-600 hover:text-brand-blue transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-brand-blue after:transition-all after:duration-300">
+                    Как это работает
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Подробное объяснение процесса</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a href="#pricing" className="text-sm font-medium text-gray-600 hover:text-brand-blue transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-brand-blue after:transition-all after:duration-300">
+                    Тарифы
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Наши доступные планы</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a href="#philosophy" className="text-sm font-medium text-gray-600 hover:text-brand-blue transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-brand-blue after:transition-all after:duration-300">
+                    Философия
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Наш подход к избавлению от привычек</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a href="#contact" className="text-sm font-medium text-gray-600 hover:text-brand-blue transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-brand-blue after:transition-all after:duration-300">
+                    Контакты
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Свяжитесь с нами</p>
+                </TooltipContent>
+              </Tooltip>
+            </nav>
+          </TooltipProvider>
         ) : null}
 
         <div className="flex items-center gap-4">
           {!isMobile ? (
             <>
-              <Button variant="ghost" size="sm" className="rounded-full font-medium">
+              <Button variant="ghost" size="sm" className="rounded-full font-medium hover:bg-gray-100 transition-all">
                 Войти
               </Button>
-              <Button size="sm" className="rounded-full bg-brand-blue hover:bg-brand-blue/90 btn-hover-effect">
+              <Button size="sm" className="rounded-full bg-brand-blue hover:bg-brand-blue/90 btn-hover-effect animate-pulse-subtle">
                 Регистрация
               </Button>
             </>
