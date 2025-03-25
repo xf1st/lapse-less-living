@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -73,11 +74,6 @@ const Dashboard = () => {
       },
     })
   );
-
-  // Redirect if not authenticated
-  if (!user && !authLoading) {
-    return <Navigate to="/auth" />;
-  }
 
   const fetchHabits = useCallback(async () => {
     try {
@@ -446,6 +442,11 @@ const Dashboard = () => {
         <Loader size="lg" />
       </div>
     );
+  }
+
+  // Redirect if not authenticated
+  if (!user && !authLoading) {
+    return <Navigate to="/auth" />;
   }
 
   // Check if user is admin for admin panel access
