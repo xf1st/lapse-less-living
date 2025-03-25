@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -374,16 +373,14 @@ const Dashboard = () => {
         }
         
         // Move habits to no folder
-        const updates = folderHabits.map(habit => ({
-          id: habit.id,
-          folder_id: null
-        }));
-        
-        const { error: updateError } = await supabase
-          .from("habits")
-          .upsert(updates);
-          
-        if (updateError) throw updateError;
+        for (const habit of folderHabits) {
+          const { error: updateError } = await supabase
+            .from("habits")
+            .update({ folder_id: null })
+            .eq("id", habit.id);
+            
+          if (updateError) throw updateError;
+        }
       }
       
       // Delete the folder

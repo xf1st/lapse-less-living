@@ -15,6 +15,7 @@ type SortableHabitCardProps = {
 export const SortableHabitCard = ({ 
   habit, 
   isCompleted, 
+  onToggleCompletion,
   onDelete,
   onEdit
 }: SortableHabitCardProps) => {
@@ -36,6 +37,7 @@ export const SortableHabitCard = ({
       <HabitCard
         habit={habit}
         isCompleted={isCompleted}
+        onToggleCompletion={onToggleCompletion}
         onDelete={onDelete}
         onEdit={onEdit}
         onReorderStart={() => ({ attributes, listeners })}

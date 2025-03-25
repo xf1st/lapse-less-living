@@ -32,6 +32,7 @@ type FolderCardProps = {
   folder: Folder;
   habits: Habit[];
   isCompleted: (habitId: string) => boolean;
+  onToggleCompletion?: (habitId: string) => Promise<void>;
   onDeleteHabit: (habitId: string) => Promise<void>;
   onEditHabit: (habit: Habit) => void;
   onEditFolder: (folder: Folder) => void;
@@ -44,6 +45,7 @@ const FolderCard = ({
   folder, 
   habits,
   isCompleted,
+  onToggleCompletion,
   onDeleteHabit,
   onEditHabit,
   onEditFolder,
@@ -154,6 +156,7 @@ const FolderCard = ({
                         key={habit.id}
                         habit={habit}
                         isCompleted={isCompleted(habit.id)}
+                        onToggleCompletion={onToggleCompletion}
                         onDelete={onDeleteHabit}
                         onEdit={onEditHabit}
                       />
