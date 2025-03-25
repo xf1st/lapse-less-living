@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -72,7 +71,6 @@ const AdminPanel = () => {
   const [updating, setUpdating] = useState(false);
   const { toast } = useToast();
 
-  // Check if user is admin
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user) return;
@@ -105,22 +103,17 @@ const AdminPanel = () => {
     try {
       setLoading(true);
       
-      // Get users from auth.users
       const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
       
       if (authError) throw authError;
       
       if (!authUsers || !authUsers.users) return;
       
-      // Get habits count for each user
-      const { data: habitsData, error: habitsError } = await supabase
+      const habitsData = await supabase
         .from("habits")
         .select("user_id, plan_id")
         .is('deleted_at', null);
         
-      if (habitsError) throw habitsError;
-      
-      // Create a map of user_id -> habits_count
       const habitsCount = {};
       const userPlans = {};
       
@@ -131,7 +124,6 @@ const AdminPanel = () => {
         }
       });
       
-      // Combine data
       const combinedUsers = authUsers.users.map(authUser => ({
         id: authUser.id,
         email: authUser.email,
@@ -186,7 +178,6 @@ const AdminPanel = () => {
     try {
       setUpdating(true);
       
-      // Update plan_id for all user's habits
       const { error } = await supabase
         .from("habits")
         .update({ plan_id: userPlan })
@@ -199,7 +190,6 @@ const AdminPanel = () => {
         description: `Тариф для пользователя ${selectedUser.email} обновлен успешно`,
       });
       
-      // Update local state
       setUsers(users.map(u => 
         u.id === selectedUser.id ? { ...u, plan_id: userPlan } : u
       ));
@@ -231,12 +221,10 @@ const AdminPanel = () => {
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Redirect if not authenticated or not admin
   if (!authLoading && (!user || (isAdmin === false))) {
     return <Navigate to="/dashboard" />;
   }
 
-  // Show loader when checking admin status
   if (loading || authLoading || isAdmin === null) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -247,7 +235,6 @@ const AdminPanel = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
@@ -282,7 +269,6 @@ const AdminPanel = () => {
         </div>
       </header>
 
-      {/* Main content */}
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div>

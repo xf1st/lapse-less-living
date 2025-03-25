@@ -186,14 +186,14 @@ const HabitForm = ({
                 Папка
               </Label>
               <Select
-                value={folderId || ""}
-                onValueChange={(value) => setFolderId(value || null)}
+                value={folderId || "none"}
+                onValueChange={(value) => setFolderId(value === "none" ? null : value)}
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Без папки" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Без папки</SelectItem>
+                  <SelectItem value="none">Без папки</SelectItem>
                   {folders.map((folder) => (
                     <SelectItem key={folder.id} value={folder.id}>
                       {folder.name}

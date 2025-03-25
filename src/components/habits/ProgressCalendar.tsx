@@ -182,8 +182,8 @@ const ProgressCalendar = ({ habits, entries, onEntriesChange, canViewStats }: Pr
       <CardContent>
         <div className="mb-4">
           <Select
-            value={selectedHabit || ""}
-            onValueChange={setSelectedHabit}
+            value={selectedHabit || "none"}
+            onValueChange={(value) => setSelectedHabit(value === "none" ? null : value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Выберите привычку" />
