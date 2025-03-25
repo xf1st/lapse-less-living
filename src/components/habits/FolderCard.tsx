@@ -18,7 +18,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { Habit } from "./HabitCard";
-import { SortableHabitCard } from "./SortableHabitCard";
+import HabitList from "./HabitList";
 
 export type Folder = {
   id: string;
@@ -125,18 +125,12 @@ const FolderCard = ({
         <CollapsibleContent>
           <CardContent className="pt-0">
             {habits.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {habits.map((habit) => (
-                  <SortableHabitCard
-                    key={habit.id}
-                    habit={habit}
-                    isCompleted={isCompleted(habit.id)}
-                    onToggleCompletion={onToggleCompletion}
-                    onDelete={onDeleteHabit}
-                    onEdit={onEditHabit}
-                  />
-                ))}
-              </div>
+              <HabitList 
+                habits={habits}
+                isHabitCompleted={isCompleted}
+                onDeleteHabit={onDeleteHabit}
+                onEditHabit={onEditHabit}
+              />
             ) : (
               <div className="text-center py-4 text-gray-500">
                 В этой папке еще нет привычек

@@ -13,7 +13,7 @@ const DashboardMobileActions = ({
   createFolder 
 }: DashboardMobileActionsProps) => {
   return (
-    <div className="md:hidden fixed bottom-6 right-6 flex flex-col space-y-2">
+    <div className="md:hidden fixed bottom-6 right-6 flex flex-col space-y-2 z-50">
       <Button
         onClick={createFolder}
         className="h-12 w-12 rounded-full shadow-lg bg-white border border-brand-blue text-brand-blue hover:bg-gray-50"

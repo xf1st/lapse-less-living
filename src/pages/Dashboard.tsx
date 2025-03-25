@@ -2,12 +2,12 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Habit } from "@/components/habits/HabitCard";
-import HabitForm from "@/components/habits/HabitForm";
-import FolderForm from "@/components/habits/FolderForm";
 import { Folder } from "@/components/habits/FolderCard";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import DashboardContent from "@/components/dashboard/DashboardContent";
 import { useHabits } from "@/hooks/useHabits";
+import HabitForm from "@/components/habits/form/HabitForm";
+import FolderForm from "@/components/habits/form/FolderForm";
 
 const Dashboard = () => {
   const { user } = useAuth();

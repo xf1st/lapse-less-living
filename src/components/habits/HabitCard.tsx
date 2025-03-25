@@ -128,6 +128,12 @@ const HabitCard = ({
     }
   };
 
+  const getStreakText = (count: number) => {
+    if (count === 1) return "день";
+    if (count > 1 && count < 5) return "дня";
+    return "дней";
+  };
+
   return (
     <Card className="shadow-sm border hover:shadow-md transition-shadow">
       <CardHeader className="pb-2 flex flex-row items-start justify-between space-y-0">
@@ -167,8 +173,7 @@ const HabitCard = ({
           <div className="text-center">
             <div className="text-4xl font-bold text-brand-blue">{habit.current_streak}</div>
             <div className="text-sm text-gray-500 mt-1">
-              {habit.current_streak === 1 ? "день" : 
-               (habit.current_streak > 1 && habit.current_streak < 5) ? "дня" : "дней"}
+              {getStreakText(habit.current_streak)}
             </div>
           </div>
         </div>
@@ -183,8 +188,7 @@ const HabitCard = ({
         {habit.longest_streak > 0 && (
           <div className="flex items-center text-xs text-gray-500 mt-1">
             <Flame className="h-3 w-3 mr-1 text-amber-500" />
-            <span>Рекорд: {habit.longest_streak} {habit.longest_streak === 1 ? "день" : 
-              (habit.longest_streak > 1 && habit.longest_streak < 5) ? "дня" : "дней"}</span>
+            <span>Рекорд: {habit.longest_streak} {getStreakText(habit.longest_streak)}</span>
           </div>
         )}
       </CardContent>

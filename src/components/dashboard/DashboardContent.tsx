@@ -8,6 +8,7 @@ import EmptyHabitState from "./EmptyHabitState";
 import HabitFolderList from "./HabitFolderList";
 import DashboardHeader from "./DashboardHeader";
 import PremiumBanner from "./PremiumBanner";
+import PromoPlans from "./PromoPlans";
 import { Habit } from "@/components/habits/HabitCard";
 import { Folder } from "@/components/habits/FolderCard";
 import { Plan } from "@/types/habit";
@@ -67,6 +68,8 @@ const DashboardContent = ({
     );
   }
 
+  const isBasicPlan = userPlan?.id === "basic";
+
   return (
     <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 md:px-8">
       <DashboardHeader createHabit={() => createHabit()} createFolder={createFolder} />
@@ -74,8 +77,8 @@ const DashboardContent = ({
       {/* Stats and Achievements Section or Promo Banner */}
       {habits.length > 0 && (
         <>
-          {userPlan?.id === "basic" ? (
-            <PremiumBanner />
+          {isBasicPlan ? (
+            <PromoPlans />
           ) : (
             <>
               <Stats 

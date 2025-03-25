@@ -2,7 +2,7 @@
 import React from "react";
 import FolderCard, { Folder } from "@/components/habits/FolderCard";
 import { Habit } from "@/components/habits/HabitCard";
-import { SortableHabitCard } from "@/components/habits/SortableHabitCard";
+import HabitList from "@/components/habits/HabitList";
 
 type HabitFolderListProps = {
   folderHabits: Array<{
@@ -51,17 +51,12 @@ const HabitFolderList = ({
       {unfolderedHabits.length > 0 && (
         <div className="mt-4">
           <h3 className="text-md font-medium text-gray-700 mb-3">Без папки</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {unfolderedHabits.map((habit) => (
-              <SortableHabitCard
-                key={habit.id}
-                habit={habit}
-                isCompleted={isHabitCompletedToday(habit.id)}
-                onDelete={onDeleteHabit}
-                onEdit={onEditHabit}
-              />
-            ))}
-          </div>
+          <HabitList
+            habits={unfolderedHabits}
+            isHabitCompleted={isHabitCompletedToday}
+            onDeleteHabit={onDeleteHabit}
+            onEditHabit={onEditHabit}
+          />
         </div>
       )}
     </div>
