@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -109,20 +110,24 @@ const AdminPanel = () => {
       
       if (!authUsers || !authUsers.users) return;
       
-      const habitsData = await supabase
+      const { data: habitsData, error: habitsError } = await supabase
         .from("habits")
         .select("user_id, plan_id")
         .is('deleted_at', null);
         
+      if (habitsError) throw habitsError;
+      
       const habitsCount = {};
       const userPlans = {};
       
-      habitsData?.forEach(habit => {
-        habitsCount[habit.user_id] = (habitsCount[habit.user_id] || 0) + 1;
-        if (habit.plan_id) {
-          userPlans[habit.user_id] = habit.plan_id;
-        }
-      });
+      if (habitsData) {
+        habitsData.forEach(habit => {
+          habitsCount[habit.user_id] = (habitsCount[habit.user_id] || 0) + 1;
+          if (habit.plan_id) {
+            userPlans[habit.user_id] = habit.plan_id;
+          }
+        });
+      }
       
       const combinedUsers = authUsers.users.map(authUser => ({
         id: authUser.id,
