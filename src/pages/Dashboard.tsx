@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,7 +11,8 @@ import {
   Menu,
   Home,
   Trophy,
-  ShieldCheck
+  ShieldCheck,
+  FolderPlus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,10 +29,11 @@ import HabitForm from "@/components/habits/HabitForm";
 import ProgressCalendar from "@/components/habits/ProgressCalendar";
 import Stats from "@/components/habits/Stats";
 import Achievements from "@/components/habits/Achievements";
-import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
+import { SortableHabitCard } from "@/components/habits/SortableHabitCard";
+import FolderCard, { Folder } from "@/components/habits/FolderCard";
+import FolderForm from "@/components/habits/FolderForm";
 
 type HabitEntry = {
   id: string;
@@ -51,40 +52,17 @@ type Plan = {
   price: number;
 };
 
-const SortableHabitCard = ({ habit, isCompleted, onToggleCompletion, onDelete }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id: habit.id });
-  
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style}>
-      <HabitCard
-        habit={habit}
-        isCompleted={isCompleted}
-        onToggleCompletion={onToggleCompletion}
-        onDelete={onDelete}
-        onReorderStart={() => listeners && attributes}
-      />
-    </div>
-  );
-};
-
 const Dashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const [habits, setHabits] = useState<Habit[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
   const [habitEntries, setHabitEntries] = useState<HabitEntry[]>([]);
   const [userPlan, setUserPlan] = useState<Plan | null>(null);
   const [loading, setLoading] = useState(true);
   const [newHabitOpen, setNewHabitOpen] = useState(false);
+  const [editHabit, setEditHabit] = useState<Habit | null>(null);
+  const [newFolderOpen, setNewFolderOpen] = useState(false);
+  const [editFolder, setEditFolder] = useState<Folder | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { toast } = useToast();
 
@@ -123,6 +101,29 @@ const Dashboard = () => {
       });
     } finally {
       setLoading(false);
+    }
+  }, [toast]);
+
+  const fetchFolders = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("habit_folders")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        setFolders(data);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Ошибка загрузки папок",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   }, [toast]);
 
@@ -194,66 +195,62 @@ const Dashboard = () => {
   }, []);
 
   const updateStreaks = async (entries: HabitEntry[]) => {
-    try {
-      // Group entries by habit_id
-      const entriesByHabit = {};
-      entries.forEach(entry => {
-        if (!entriesByHabit[entry.habit_id]) {
-          entriesByHabit[entry.habit_id] = [];
-        }
-        entriesByHabit[entry.habit_id].push(entry);
-      });
+    // Group entries by habit_id
+    const entriesByHabit = {};
+    entries.forEach(entry => {
+      if (!entriesByHabit[entry.habit_id]) {
+        entriesByHabit[entry.habit_id] = [];
+      }
+      entriesByHabit[entry.habit_id].push(entry);
+    });
 
-      // For each habit, calculate current streak and longest streak
-      for (const habit of habits) {
-        const habitEntries = entriesByHabit[habit.id] || [];
-        
-        // Sort entries by date (newest first)
-        habitEntries.sort((a, b) => 
-          new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
-        );
+    // For each habit, calculate current streak and longest streak
+    for (const habit of habits) {
+      const habitEntries = entriesByHabit[habit.id] || [];
+      
+      // Sort entries by date (newest first)
+      habitEntries.sort((a, b) => 
+        new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
+      );
 
-        // Find the most recent relapse (if any)
-        const lastRelapse = habitEntries.find(entry => entry.is_relapse);
-        const lastRelapseDate = lastRelapse 
-          ? new Date(lastRelapse.completed_at) 
-          : new Date(0); // If no relapse, use epoch time
-        
-        // Count current streak (days since last relapse)
-        const entriesAfterRelapse = habitEntries.filter(entry => 
-          !entry.is_relapse && new Date(entry.completed_at) > lastRelapseDate
-        );
-        
-        const currentStreak = entriesAfterRelapse.length;
-        
-        // Find longest streak
-        let longestStreak = habit.longest_streak || 0;
-        if (currentStreak > longestStreak) {
-          longestStreak = currentStreak;
-        }
-        
-        // Update habit with new streak information
-        if (habit.current_streak !== currentStreak || habit.longest_streak !== longestStreak) {
-          await supabase
-            .from("habits")
-            .update({
-              current_streak: currentStreak,
-              longest_streak: longestStreak
-            })
-            .eq("id", habit.id);
-        }
-        
-        // Check for achievements
-        if (currentStreak > 0) {
-          checkForAchievements(habit.id, currentStreak);
-        }
+      // Find the most recent relapse (if any)
+      const lastRelapse = habitEntries.find(entry => entry.is_relapse);
+      const lastRelapseDate = lastRelapse 
+        ? new Date(lastRelapse.completed_at) 
+        : new Date(0); // If no relapse, use epoch time
+      
+      // Count current streak (days since last relapse)
+      const entriesAfterRelapse = habitEntries.filter(entry => 
+        !entry.is_relapse && new Date(entry.completed_at) > lastRelapseDate
+      );
+      
+      const currentStreak = entriesAfterRelapse.length;
+      
+      // Find longest streak
+      let longestStreak = habit.longest_streak || 0;
+      if (currentStreak > longestStreak) {
+        longestStreak = currentStreak;
       }
       
-      // Refresh habits to get updated streak info
-      fetchHabits();
-    } catch (error: any) {
-      console.error("Error updating streaks:", error);
+      // Update habit with new streak information
+      if (habit.current_streak !== currentStreak || habit.longest_streak !== longestStreak) {
+        await supabase
+          .from("habits")
+          .update({
+            current_streak: currentStreak,
+            longest_streak: longestStreak
+          })
+          .eq("id", habit.id);
+      }
+      
+      // Check for achievements
+      if (currentStreak > 0) {
+        checkForAchievements(habit.id, currentStreak);
+      }
     }
+    
+    // Refresh habits to get updated streak info
+    fetchHabits();
   };
 
   const checkForAchievements = async (habitId: string, currentStreak: number) => {
@@ -311,13 +308,33 @@ const Dashboard = () => {
   useEffect(() => {
     if (user) {
       fetchHabits();
+      fetchFolders();
       fetchHabitEntries();
       fetchUserPlan();
     }
-  }, [user, fetchHabits, fetchHabitEntries, fetchUserPlan]);
+  }, [user, fetchHabits, fetchFolders, fetchHabitEntries, fetchUserPlan]);
 
-  const createHabit = () => {
+  const createHabit = (folderId?: string) => {
+    setEditHabit(null);
+    if (folderId) {
+      setEditHabit({ folder_id: folderId } as any);
+    }
     setNewHabitOpen(true);
+  };
+
+  const editHabitHandler = (habit: Habit) => {
+    setEditHabit(habit);
+    setNewHabitOpen(true);
+  };
+
+  const createFolder = () => {
+    setEditFolder(null);
+    setNewFolderOpen(true);
+  };
+
+  const editFolderHandler = (folder: Folder) => {
+    setEditFolder(folder);
+    setNewFolderOpen(true);
   };
 
   const toggleHabitCompletion = async (habitId: string) => {
@@ -394,6 +411,56 @@ const Dashboard = () => {
     }
   };
 
+  const deleteFolder = async (id: string) => {
+    try {
+      // Check if folder has habits
+      const folderHabits = habits.filter(habit => habit.folder_id === id);
+      
+      if (folderHabits.length > 0) {
+        // Ask user to confirm deletion
+        if (!window.confirm(`Эта папка содержит ${folderHabits.length} привычек. Они будут перемещены в раздел "Без папки". Продолжить?`)) {
+          return;
+        }
+        
+        // Move habits to no folder
+        const updates = folderHabits.map(habit => ({
+          id: habit.id,
+          folder_id: null
+        }));
+        
+        const { error: updateError } = await supabase
+          .from("habits")
+          .upsert(updates);
+          
+        if (updateError) throw updateError;
+      }
+      
+      // Delete the folder
+      const { error } = await supabase
+        .from("habit_folders")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Папка удалена",
+        description: "Папка успешно удалена",
+      });
+
+      fetchHabits();
+      fetchFolders();
+    } catch (error: any) {
+      toast({
+        title: "Ошибка удаления папки",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const isHabitCompletedToday = (habitId: string) => {
     const today = new Date().toISOString().split("T")[0];
     return habitEntries.some(
@@ -404,7 +471,7 @@ const Dashboard = () => {
     );
   };
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent, folderId?: string) => {
     const { active, over } = event;
     
     if (active.id !== over?.id) {
@@ -412,7 +479,17 @@ const Dashboard = () => {
         const oldIndex = habits.findIndex((h) => h.id === active.id);
         const newIndex = habits.findIndex((h) => h.id === over?.id);
         
-        return arrayMove(habits, oldIndex, newIndex);
+        // Filter by folder if needed
+        const folderHabits = folderId 
+          ? habits.filter(h => h.folder_id === folderId)
+          : habits.filter(h => !h.folder_id);
+        
+        // Do the swap within the folder
+        if (folderId || (!folderId && !habits[oldIndex].folder_id)) {
+          return arrayMove(habits, oldIndex, newIndex);
+        }
+        
+        return habits;
       });
       
       // You can also update the order in the database here if needed
@@ -427,6 +504,13 @@ const Dashboard = () => {
       </div>
     );
   }
+
+  // Group habits by folder
+  const unfolderedHabits = habits.filter(habit => !habit.folder_id);
+  const folderHabits = folders.map(folder => ({
+    folder,
+    habits: habits.filter(habit => habit.folder_id === folder.id)
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -450,20 +534,27 @@ const Dashboard = () => {
             <Calendar className="mr-3 h-5 w-5" />
             Привычки
           </a>
-          <a
-            href="/dashboard"
-            className="flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:text-brand-blue hover:bg-gray-100 rounded-md"
-          >
-            <BarChart3 className="mr-3 h-5 w-5" />
-            Статистика
-          </a>
-          <a
-            href="/dashboard"
-            className="flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:text-brand-blue hover:bg-gray-100 rounded-md"
-          >
-            <Trophy className="mr-3 h-5 w-5" />
-            Достижения
-          </a>
+          
+          {userPlan?.has_statistics && (
+            <a
+              href="/stats"
+              className="flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:text-brand-blue hover:bg-gray-100 rounded-md"
+            >
+              <BarChart3 className="mr-3 h-5 w-5" />
+              Статистика
+            </a>
+          )}
+          
+          {userPlan?.has_achievements && (
+            <a
+              href="/achievements"
+              className="flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:text-brand-blue hover:bg-gray-100 rounded-md"
+            >
+              <Trophy className="mr-3 h-5 w-5" />
+              Достижения
+            </a>
+          )}
+          
           <a
             href="/"
             className="flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:text-brand-blue hover:bg-gray-100 rounded-md"
@@ -471,6 +562,16 @@ const Dashboard = () => {
             <Home className="mr-3 h-5 w-5" />
             На главную
           </a>
+          
+          {user?.email === "admin@admin.com" && (
+            <a
+              href="/admin"
+              className="flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:text-brand-blue hover:bg-gray-100 rounded-md"
+            >
+              <ShieldCheck className="mr-3 h-5 w-5" />
+              Админ панель
+            </a>
+          )}
         </nav>
         <div className="p-4 border-t border-gray-200">
           <div className="mb-4 p-2 bg-blue-50 rounded-md flex items-center justify-between">
@@ -553,22 +654,29 @@ const Dashboard = () => {
                 <Calendar className="mr-3 h-5 w-5" />
                 Привычки
               </a>
-              <a
-                href="/dashboard"
-                className="flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:text-brand-blue hover:bg-gray-100 rounded-md"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                <BarChart3 className="mr-3 h-5 w-5" />
-                Статистика
-              </a>
-              <a
-                href="/dashboard"
-                className="flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:text-brand-blue hover:bg-gray-100 rounded-md"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                <Trophy className="mr-3 h-5 w-5" />
-                Достижения
-              </a>
+              
+              {userPlan?.has_statistics && (
+                <a
+                  href="/stats"
+                  className="flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:text-brand-blue hover:bg-gray-100 rounded-md"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  <BarChart3 className="mr-3 h-5 w-5" />
+                  Статистика
+                </a>
+              )}
+              
+              {userPlan?.has_achievements && (
+                <a
+                  href="/achievements"
+                  className="flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:text-brand-blue hover:bg-gray-100 rounded-md"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  <Trophy className="mr-3 h-5 w-5" />
+                  Достижения
+                </a>
+              )}
+              
               <a
                 href="/"
                 className="flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:text-brand-blue hover:bg-gray-100 rounded-md"
@@ -577,6 +685,18 @@ const Dashboard = () => {
                 <Home className="mr-3 h-5 w-5" />
                 На главную
               </a>
+              
+              {user?.email === "admin@admin.com" && (
+                <a
+                  href="/admin"
+                  className="flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:text-brand-blue hover:bg-gray-100 rounded-md"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  <ShieldCheck className="mr-3 h-5 w-5" />
+                  Админ панель
+                </a>
+              )}
+              
               <Button
                 variant="ghost"
                 onClick={() => {
@@ -598,13 +718,23 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 md:px-8">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-gray-900">Мои привычки</h1>
-            <Button 
-              onClick={createHabit}
-              className="bg-brand-blue hover:bg-brand-blue/90"
-            >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Новая привычка
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={createFolder}
+                variant="outline"
+                className="border-brand-blue text-brand-blue"
+              >
+                <FolderPlus className="mr-2 h-4 w-4" />
+                Новая папка
+              </Button>
+              <Button 
+                onClick={() => createHabit()}
+                className="bg-brand-blue hover:bg-brand-blue/90"
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Новая привычка
+              </Button>
+            </div>
           </div>
 
           {/* Stats and Achievements Section */}
@@ -640,28 +770,42 @@ const Dashboard = () => {
           ) : habits.length > 0 ? (
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Отслеживаемые привычки</h2>
-              <DndContext 
-                sensors={sensors} 
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext 
-                  items={habits.map(habit => habit.id)}
-                  strategy={verticalListSortingStrategy}
-                >
+              
+              {/* Folders */}
+              {folderHabits.map(({ folder, habits }) => (
+                <FolderCard
+                  key={folder.id}
+                  folder={folder}
+                  habits={habits}
+                  isCompleted={isHabitCompletedToday}
+                  onToggleCompletion={toggleHabitCompletion}
+                  onDeleteHabit={deleteHabit}
+                  onEditHabit={editHabitHandler}
+                  onEditFolder={editFolderHandler}
+                  onDeleteFolder={deleteFolder}
+                  onDragEnd={handleDragEnd}
+                  onAddHabit={(folderId) => createHabit(folderId)}
+                />
+              ))}
+              
+              {/* Unfiled habits */}
+              {unfolderedHabits.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="text-md font-medium text-gray-700 mb-3">Без папки</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {habits.map((habit) => (
+                    {unfolderedHabits.map((habit) => (
                       <SortableHabitCard
                         key={habit.id}
                         habit={habit}
                         isCompleted={isHabitCompletedToday(habit.id)}
                         onToggleCompletion={toggleHabitCompletion}
                         onDelete={deleteHabit}
+                        onEdit={editHabitHandler}
                       />
                     ))}
                   </div>
-                </SortableContext>
-              </DndContext>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-12">
@@ -673,7 +817,7 @@ const Dashboard = () => {
                 Создайте свою первую привычку, от которой хотите избавиться, и начните отслеживать свой прогресс
               </p>
               <Button
-                onClick={createHabit}
+                onClick={() => createHabit()}
                 className="bg-brand-blue hover:bg-brand-blue/90"
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -684,10 +828,16 @@ const Dashboard = () => {
         </div>
       </main>
 
-      {/* Mobile add button */}
-      <div className="md:hidden fixed bottom-6 right-6">
+      {/* Mobile add buttons */}
+      <div className="md:hidden fixed bottom-6 right-6 flex flex-col space-y-2">
         <Button
-          onClick={createHabit}
+          onClick={createFolder}
+          className="h-12 w-12 rounded-full shadow-lg bg-white border border-brand-blue text-brand-blue hover:bg-gray-50"
+        >
+          <FolderPlus className="h-5 w-5" />
+        </Button>
+        <Button
+          onClick={() => createHabit()}
           className="h-14 w-14 rounded-full shadow-lg bg-brand-blue hover:bg-brand-blue/90"
         >
           <PlusCircle className="h-6 w-6" />
@@ -697,10 +847,26 @@ const Dashboard = () => {
       {/* Add Habit Form Dialog */}
       <HabitForm 
         isOpen={newHabitOpen} 
-        onClose={() => setNewHabitOpen(false)} 
+        onClose={() => {
+          setNewHabitOpen(false);
+          setEditHabit(null);
+        }} 
         onSuccess={fetchHabits}
         maxHabits={userPlan?.max_habits || 3}
         currentHabitsCount={habits.length}
+        habit={editHabit}
+        folders={folders}
+      />
+
+      {/* Add Folder Form Dialog */}
+      <FolderForm
+        isOpen={newFolderOpen}
+        onClose={() => {
+          setNewFolderOpen(false);
+          setEditFolder(null);
+        }}
+        onSuccess={fetchFolders}
+        folder={editFolder}
       />
     </div>
   );

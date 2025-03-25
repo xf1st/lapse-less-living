@@ -1,15 +1,5 @@
 
-import { useState } from "react";
-import { format } from "date-fns";
-import { ru } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,55 +8,80 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Folder } from "./FolderCard";
+import { Habit } from "./HabitCard";
 
 type HabitFormProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: () => Promise<void>;
   maxHabits: number;
   currentHabitsCount: number;
+  habit?: Habit | null;
+  folders?: Folder[];
 };
 
-const HabitForm = ({ isOpen, onClose, onSuccess, maxHabits, currentHabitsCount }: HabitFormProps) => {
-  const { user } = useAuth();
+const HabitForm = ({ 
+  isOpen, 
+  onClose, 
+  onSuccess, 
+  maxHabits, 
+  currentHabitsCount,
+  habit,
+  folders = []
+}: HabitFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    frequency: "daily",
-    color: "blue",
-    start_date: new Date(),
-  });
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [frequency, setFrequency] = useState("daily");
+  const [color, setColor] = useState("blue");
+  const [folderId, setFolderId] = useState<string | null>(null);
 
-  const handleSubmit = async () => {
-    if (!formData.name.trim()) {
+  const isEditing = !!habit?.id;
+
+  useEffect(() => {
+    if (habit) {
+      setName(habit.name || "");
+      setDescription(habit.description || "");
+      setFrequency(habit.frequency || "daily");
+      setColor(habit.color || "blue");
+      setFolderId(habit.folder_id || null);
+    } else {
+      // Reset form
+      setName("");
+      setDescription("");
+      setFrequency("daily");
+      setColor("blue");
+      setFolderId(null);
+    }
+  }, [habit, isOpen]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!isEditing && currentHabitsCount >= maxHabits) {
       toast({
-        title: "Ошибка",
-        description: "Введите название привычки",
+        title: "Лимит привычек",
+        description: `Ваш тариф позволяет создать максимум ${maxHabits} привычек. Обновите тариф для добавления большего количества привычек.`,
         variant: "destructive",
       });
       return;
     }
-
-    if (currentHabitsCount >= maxHabits) {
+    
+    if (!name.trim()) {
       toast({
-        title: "Ограничение тарифа",
-        description: `Ваш тариф позволяет создать максимум ${maxHabits} привычек. Обновите тариф для создания большего количества привычек.`,
+        title: "Ошибка",
+        description: "Название привычки не может быть пустым",
         variant: "destructive",
       });
       return;
@@ -75,37 +90,50 @@ const HabitForm = ({ isOpen, onClose, onSuccess, maxHabits, currentHabitsCount }
     try {
       setIsSubmitting(true);
 
-      const { error } = await supabase.from("habits").insert({
-        name: formData.name,
-        description: formData.description || null,
-        frequency: formData.frequency,
-        color: formData.color,
-        start_date: format(formData.start_date, "yyyy-MM-dd"),
-        user_id: user?.id,
-      });
+      if (isEditing) {
+        // Update existing habit
+        const { error } = await supabase
+          .from("habits")
+          .update({
+            name,
+            description,
+            frequency,
+            color,
+            folder_id: folderId,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", habit.id);
 
-      if (error) {
-        throw error;
+        if (error) throw error;
+
+        toast({
+          title: "Привычка обновлена",
+          description: "Привычка успешно обновлена",
+        });
+      } else {
+        // Create new habit
+        const { error } = await supabase.from("habits").insert({
+          name,
+          description,
+          frequency,
+          color,
+          folder_id: folderId,
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Привычка создана",
+          description: "Новая привычка успешно создана",
+        });
       }
 
-      toast({
-        title: "Привычка создана",
-        description: "Новая привычка успешно добавлена",
-      });
-
-      setFormData({
-        name: "",
-        description: "",
-        frequency: "daily",
-        color: "blue",
-        start_date: new Date(),
-      });
-      
+      await onSuccess();
       onClose();
-      onSuccess();
     } catch (error: any) {
       toast({
-        title: "Ошибка создания привычки",
+        title: "Ошибка",
         description: error.message,
         variant: "destructive",
       });
@@ -116,138 +144,132 @@ const HabitForm = ({ isOpen, onClose, onSuccess, maxHabits, currentHabitsCount }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Создать новую привычку</DialogTitle>
+          <DialogTitle>
+            {isEditing ? "Редактировать привычку" : "Создать новую привычку"}
+          </DialogTitle>
           <DialogDescription>
-            Добавьте привычку, от которой хотите избавиться
+            {isEditing
+              ? "Измените детали привычки, от которой хотите избавиться"
+              : "Создайте новую привычку, от которой хотите избавиться"}
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="habit-name">Название привычки</Label>
-            <Input
-              id="habit-name"
-              placeholder="Напр., Курение"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  name: e.target.value,
-                })
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="habit-description">Описание (опционально)</Label>
-            <Textarea
-              id="habit-description"
-              placeholder="Опишите привычку подробнее"
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  description: e.target.value,
-                })
-              }
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="habit-frequency">Частота</Label>
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Название
+              </Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="col-span-3"
+                placeholder="Например: Курение"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="description" className="text-right">
+                Описание
+              </Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="col-span-3"
+                placeholder="Дополнительная информация о привычке"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="folder" className="text-right">
+                Папка
+              </Label>
               <Select
-                value={formData.frequency}
-                onValueChange={(value) =>
-                  setFormData({
-                    ...formData,
-                    frequency: value,
-                  })
-                }
+                value={folderId || ""}
+                onValueChange={(value) => setFolderId(value || null)}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите частоту" />
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Без папки" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="daily">Ежедневно</SelectItem>
-                  <SelectItem value="weekly">Еженедельно</SelectItem>
-                  <SelectItem value="monthly">Ежемесячно</SelectItem>
+                  <SelectItem value="">Без папки</SelectItem>
+                  {folders.map((folder) => (
+                    <SelectItem key={folder.id} value={folder.id}>
+                      {folder.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="habit-color">Цвет</Label>
-              <Select
-                value={formData.color}
-                onValueChange={(value) =>
-                  setFormData({
-                    ...formData,
-                    color: value,
-                  })
-                }
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="frequency" className="text-right">
+                Периодичность
+              </Label>
+              <RadioGroup
+                value={frequency}
+                onValueChange={setFrequency}
+                className="grid grid-cols-3 col-span-3 gap-4"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите цвет" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="blue">Синий</SelectItem>
-                  <SelectItem value="green">Зеленый</SelectItem>
-                  <SelectItem value="red">Красный</SelectItem>
-                  <SelectItem value="purple">Фиолетовый</SelectItem>
-                  <SelectItem value="yellow">Желтый</SelectItem>
-                  <SelectItem value="indigo">Индиго</SelectItem>
-                  <SelectItem value="pink">Розовый</SelectItem>
-                </SelectContent>
-              </Select>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="daily" id="daily" />
+                  <Label htmlFor="daily">Ежедневно</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="weekly" id="weekly" />
+                  <Label htmlFor="weekly">Еженедельно</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="monthly" id="monthly" />
+                  <Label htmlFor="monthly">Ежемесячно</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Цвет</Label>
+              <RadioGroup
+                value={color}
+                onValueChange={setColor}
+                className="flex flex-wrap gap-2 col-span-3"
+              >
+                {["blue", "green", "red", "purple", "yellow", "indigo", "pink"].map(
+                  (colorOption) => (
+                    <div key={colorOption} className="flex items-center space-x-2">
+                      <RadioGroupItem
+                        value={colorOption}
+                        id={`color-${colorOption}`}
+                        className="sr-only"
+                      />
+                      <Label
+                        htmlFor={`color-${colorOption}`}
+                        className={cn(
+                          "h-8 w-8 rounded-full cursor-pointer ring-offset-background transition-all",
+                          `bg-${colorOption}-500`,
+                          color === colorOption
+                            ? "ring-2 ring-ring ring-offset-2"
+                            : "hover:ring-2 hover:ring-ring hover:ring-offset-1"
+                        )}
+                      />
+                    </div>
+                  )
+                )}
+              </RadioGroup>
             </div>
           </div>
-          <div className="space-y-2">
-            <Label>Дата начала</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !formData.start_date && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.start_date ? (
-                    format(formData.start_date, "d MMMM yyyy", { locale: ru })
-                  ) : (
-                    <span>Выберите дату</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={formData.start_date}
-                  onSelect={(date) => date && setFormData({ ...formData, start_date: date })}
-                  initialFocus
-                  className="pointer-events-auto"
-                  locale={ru}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={isSubmitting}
-          >
-            Отмена
-          </Button>
-          <Button 
-            onClick={handleSubmit} 
-            className="bg-brand-blue hover:bg-brand-blue/90"
-            disabled={isSubmitting}
-          >
-            Создать
-          </Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isSubmitting}
+            >
+              Отмена
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isEditing ? "Сохранить" : "Создать"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

@@ -4,24 +4,19 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { 
   Calendar, 
-  CheckCircle2, 
-  X, 
-  Trash2, 
   AlertTriangle,
-  ChevronDown,
-  ChevronUp,
+  Edit,
+  Trash2,
   Flame
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,25 +31,26 @@ export type Habit = {
   start_date: string;
   current_streak: number;
   longest_streak: number;
+  folder_id?: string | null;
 };
 
 type HabitCardProps = {
   habit: Habit;
   isCompleted: boolean;
-  onToggleCompletion: (habitId: string) => Promise<void>;
+  onToggleCompletion?: (habitId: string) => Promise<void>;
   onDelete: (habitId: string) => Promise<void>;
+  onEdit?: (habit: Habit) => void;
   onReorderStart?: () => void;
 };
 
 const HabitCard = ({ 
   habit, 
   isCompleted, 
-  onToggleCompletion, 
   onDelete,
+  onEdit,
   onReorderStart
 }: HabitCardProps) => {
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getColorClass = (color: string) => {
@@ -127,90 +123,74 @@ const HabitCard = ({
     }
   };
 
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit(habit);
+    }
+  };
+
   return (
     <Card 
       className="shadow-sm border hover:shadow-md transition-shadow cursor-move"
       onMouseDown={onReorderStart}
     >
-      <CardHeader className="pb-2">
-        <div className="flex items-center space-x-3">
-          <div className={cn("w-4 h-4 rounded-full", getColorClass(habit.color))}></div>
-          <CardTitle className="text-xl">{habit.name}</CardTitle>
-        </div>
-        <CardDescription className="flex items-center justify-between">
-          <span>{formatFrequency(habit.frequency)}</span>
-          {habit.current_streak > 0 && (
-            <div className="flex items-center gap-1 text-amber-500 font-medium">
-              <Flame className="h-4 w-4" />
-              <span>{habit.current_streak} {habit.current_streak === 1 ? "день" : "дней"}</span>
+      <CardHeader className="pb-2 flex flex-row items-start justify-between space-y-0">
+        <div className="flex items-start space-x-3">
+          <div className={cn("w-3 h-full rounded-sm mt-1", getColorClass(habit.color))}></div>
+          <div>
+            <h3 className="text-lg font-medium">{habit.name}</h3>
+            <div className="flex items-center space-x-2 mt-1">
+              <Badge variant="outline" className="text-xs font-normal">
+                {formatFrequency(habit.frequency)}
+              </Badge>
+              {habit.current_streak > 0 && (
+                <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 text-xs">
+                  <Flame className="h-3 w-3 mr-1" />
+                  <span>{habit.current_streak} {habit.current_streak === 1 ? "день" : "дней"}</span>
+                </Badge>
+              )}
             </div>
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {habit.description && <p className="text-gray-600 mb-2">{habit.description}</p>}
-        <div className="text-sm text-gray-500">
-          Начало отслеживания: {formatStartDate(habit.start_date)}
-        </div>
-      </CardContent>
-      <CardFooter className="flex flex-col gap-2 pt-0">
-        <div className="flex justify-between w-full">
-          <Button
-            variant={isCompleted ? "destructive" : "outline"}
-            size="sm"
-            onClick={() => onToggleCompletion(habit.id)}
-            disabled={isSubmitting}
-          >
-            {isCompleted ? (
-              <>
-                <X className="mr-1 h-4 w-4" />
-                Сбросить
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="mr-1 h-4 w-4" />
-                Отметить
-              </>
-            )}
-          </Button>
-          
-          <div className="flex gap-1">
-            <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </Button>
-              </CollapsibleTrigger>
-            </Collapsible>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDelete(habit.id)}
-              className="text-gray-500 hover:text-red-500"
-              disabled={isSubmitting}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
           </div>
         </div>
-        
-        <Collapsible open={isOpen} className="w-full">
-          <CollapsibleContent className="pt-2 w-full">
-            <div className="border-t pt-2 w-full">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
-                onClick={handleRelapse}
-                disabled={isSubmitting}
-              >
-                <AlertTriangle className="mr-1 h-4 w-4" />
-                Я сорвался
-              </Button>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+        <div className="flex space-x-1">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8" 
+            onClick={handleEdit}
+          >
+            <Edit className="h-4 w-4 text-gray-500 hover:text-gray-700" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8"
+            onClick={() => onDelete(habit.id)}
+          >
+            <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-500" />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {habit.description && (
+          <p className="text-sm text-gray-600 mb-2">{habit.description}</p>
+        )}
+        <div className="flex items-center text-xs text-gray-500 mt-2">
+          <Calendar className="h-3 w-3 mr-1" />
+          <span>Начало: {formatStartDate(habit.start_date)}</span>
+        </div>
+      </CardContent>
+      <CardFooter className="pt-0">
+        <Button
+          variant="destructive"
+          size="sm"
+          className="w-full"
+          onClick={handleRelapse}
+          disabled={isSubmitting}
+        >
+          <AlertTriangle className="mr-1 h-4 w-4" />
+          Я сорвался
+        </Button>
       </CardFooter>
     </Card>
   );
