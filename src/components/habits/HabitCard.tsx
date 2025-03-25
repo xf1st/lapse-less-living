@@ -38,6 +38,7 @@ export type Habit = {
 type HabitCardProps = {
   habit: Habit;
   isCompleted: boolean;
+  onToggleCompletion?: (habitId: string) => Promise<void>;
   onDelete: (habitId: string) => Promise<void>;
   onEdit?: (habit: Habit) => void;
   onReorderStart?: () => { attributes: any; listeners: any } | void;
@@ -46,6 +47,7 @@ type HabitCardProps = {
 const HabitCard = ({ 
   habit, 
   isCompleted, 
+  onToggleCompletion,
   onDelete,
   onEdit,
   onReorderStart
