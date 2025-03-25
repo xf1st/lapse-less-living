@@ -94,12 +94,40 @@ export type Database = {
           },
         ]
       }
+      habit_folders: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       habits: {
         Row: {
           color: string | null
           created_at: string | null
           current_streak: number | null
           description: string | null
+          folder_id: string | null
           frequency: string
           id: string
           longest_streak: number | null
@@ -114,6 +142,7 @@ export type Database = {
           created_at?: string | null
           current_streak?: number | null
           description?: string | null
+          folder_id?: string | null
           frequency: string
           id?: string
           longest_streak?: number | null
@@ -128,6 +157,7 @@ export type Database = {
           created_at?: string | null
           current_streak?: number | null
           description?: string | null
+          folder_id?: string | null
           frequency?: string
           id?: string
           longest_streak?: number | null
@@ -137,7 +167,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "habits_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "habit_folders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plans: {
         Row: {

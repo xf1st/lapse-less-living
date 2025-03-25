@@ -19,7 +19,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { cn } from "@/lib/utils";
 import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import HabitCard, { Habit } from "./HabitCard";
+import { Habit } from "./HabitCard";
 import { SortableHabitCard } from "./SortableHabitCard";
 
 export type Folder = {
@@ -32,7 +32,6 @@ type FolderCardProps = {
   folder: Folder;
   habits: Habit[];
   isCompleted: (habitId: string) => boolean;
-  onToggleCompletion: (habitId: string) => Promise<void>;
   onDeleteHabit: (habitId: string) => Promise<void>;
   onEditHabit: (habit: Habit) => void;
   onEditFolder: (folder: Folder) => void;
@@ -45,7 +44,6 @@ const FolderCard = ({
   folder, 
   habits,
   isCompleted,
-  onToggleCompletion,
   onDeleteHabit,
   onEditHabit,
   onEditFolder,
@@ -156,7 +154,6 @@ const FolderCard = ({
                         key={habit.id}
                         habit={habit}
                         isCompleted={isCompleted(habit.id)}
-                        onToggleCompletion={onToggleCompletion}
                         onDelete={onDeleteHabit}
                         onEdit={onEditHabit}
                       />

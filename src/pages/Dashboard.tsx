@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -337,56 +338,6 @@ const Dashboard = () => {
     setNewFolderOpen(true);
   };
 
-  const toggleHabitCompletion = async (habitId: string) => {
-    try {
-      // Check if the habit was already completed today
-      const today = new Date().toISOString().split("T")[0];
-      const existingEntry = habitEntries.find(
-        (entry) =>
-          entry.habit_id === habitId &&
-          entry.completed_at.split("T")[0] === today &&
-          !entry.is_relapse
-      );
-
-      if (existingEntry) {
-        // Delete the entry if it exists
-        const { error } = await supabase
-          .from("habit_entries")
-          .delete()
-          .eq("id", existingEntry.id);
-
-        if (error) throw error;
-
-        toast({
-          title: "Отметка удалена",
-          description: "Отметка о выполнении привычки удалена",
-        });
-      } else {
-        // Create a new entry if it doesn't exist
-        const { error } = await supabase.from("habit_entries").insert({
-          habit_id: habitId,
-          completed_at: new Date().toISOString(),
-          is_relapse: false
-        });
-
-        if (error) throw error;
-
-        toast({
-          title: "Привычка отмечена",
-          description: "Привычка отмечена как выполненная",
-        });
-      }
-
-      fetchHabitEntries();
-    } catch (error: any) {
-      toast({
-        title: "Ошибка",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
   const deleteHabit = async (id: string) => {
     try {
       const { error } = await supabase.from("habits").delete().eq("id", id);
@@ -479,20 +430,15 @@ const Dashboard = () => {
         const oldIndex = habits.findIndex((h) => h.id === active.id);
         const newIndex = habits.findIndex((h) => h.id === over?.id);
         
-        // Filter by folder if needed
-        const folderHabits = folderId 
-          ? habits.filter(h => h.folder_id === folderId)
-          : habits.filter(h => !h.folder_id);
-        
-        // Do the swap within the folder
-        if (folderId || (!folderId && !habits[oldIndex].folder_id)) {
+        // Only perform the array move if both indexes were found
+        if (oldIndex !== -1 && newIndex !== -1) {
           return arrayMove(habits, oldIndex, newIndex);
         }
         
         return habits;
       });
       
-      // You can also update the order in the database here if needed
+      // Here you would save the new order to the database if needed
     }
   };
 
@@ -504,6 +450,9 @@ const Dashboard = () => {
       </div>
     );
   }
+
+  // Check if user is admin for admin panel access
+  const isAdmin = user?.email === "admin@admin.com";
 
   // Group habits by folder
   const unfolderedHabits = habits.filter(habit => !habit.folder_id);
@@ -563,7 +512,7 @@ const Dashboard = () => {
             На главную
           </a>
           
-          {user?.email === "admin@admin.com" && (
+          {isAdmin && (
             <a
               href="/admin"
               className="flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:text-brand-blue hover:bg-gray-100 rounded-md"
@@ -686,7 +635,7 @@ const Dashboard = () => {
                 На главную
               </a>
               
-              {user?.email === "admin@admin.com" && (
+              {isAdmin && (
                 <a
                   href="/admin"
                   className="flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:text-brand-blue hover:bg-gray-100 rounded-md"
@@ -778,7 +727,6 @@ const Dashboard = () => {
                   folder={folder}
                   habits={habits}
                   isCompleted={isHabitCompletedToday}
-                  onToggleCompletion={toggleHabitCompletion}
                   onDeleteHabit={deleteHabit}
                   onEditHabit={editHabitHandler}
                   onEditFolder={editFolderHandler}
@@ -798,7 +746,6 @@ const Dashboard = () => {
                         key={habit.id}
                         habit={habit}
                         isCompleted={isHabitCompletedToday(habit.id)}
-                        onToggleCompletion={toggleHabitCompletion}
                         onDelete={deleteHabit}
                         onEdit={editHabitHandler}
                       />

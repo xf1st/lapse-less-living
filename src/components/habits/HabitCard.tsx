@@ -7,7 +7,8 @@ import {
   AlertTriangle,
   Edit,
   Trash2,
-  Flame
+  Flame,
+  GripVertical
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,10 +38,9 @@ export type Habit = {
 type HabitCardProps = {
   habit: Habit;
   isCompleted: boolean;
-  onToggleCompletion?: (habitId: string) => Promise<void>;
   onDelete: (habitId: string) => Promise<void>;
   onEdit?: (habit: Habit) => void;
-  onReorderStart?: () => void;
+  onReorderStart?: () => { attributes: any; listeners: any } | void;
 };
 
 const HabitCard = ({ 
@@ -129,11 +129,11 @@ const HabitCard = ({
     }
   };
 
+  // Get drag handle props if available
+  const dragHandleProps = onReorderStart ? onReorderStart() : null;
+
   return (
-    <Card 
-      className="shadow-sm border hover:shadow-md transition-shadow cursor-move"
-      onMouseDown={onReorderStart}
-    >
+    <Card className="shadow-sm border hover:shadow-md transition-shadow">
       <CardHeader className="pb-2 flex flex-row items-start justify-between space-y-0">
         <div className="flex items-start space-x-3">
           <div className={cn("w-3 h-full rounded-sm mt-1", getColorClass(habit.color))}></div>
@@ -152,7 +152,15 @@ const HabitCard = ({
             </div>
           </div>
         </div>
-        <div className="flex space-x-1">
+        <div className="flex items-center space-x-1">
+          {dragHandleProps && (
+            <div 
+              className="cursor-move touch-none p-1" 
+              {...dragHandleProps}
+            >
+              <GripVertical className="h-4 w-4 text-gray-400" />
+            </div>
+          )}
           <Button 
             variant="ghost" 
             size="icon" 
