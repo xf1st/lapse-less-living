@@ -60,6 +60,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError(null);
     try {
+      // Special case for admin login
+      if (email === "admin@admin.com") {
+        console.log("Admin login attempt");
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,

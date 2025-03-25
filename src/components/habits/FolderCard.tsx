@@ -17,8 +17,6 @@ import {
 } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Habit } from "./HabitCard";
 import { SortableHabitCard } from "./SortableHabitCard";
 
@@ -37,7 +35,6 @@ type FolderCardProps = {
   onEditHabit: (habit: Habit) => void;
   onEditFolder: (folder: Folder) => void;
   onDeleteFolder: (folderId: string) => Promise<void>;
-  onDragEnd: (event: DragEndEvent, folderId: string) => void;
   onAddHabit: (folderId: string) => void;
 };
 
@@ -50,7 +47,6 @@ const FolderCard = ({
   onEditHabit,
   onEditFolder,
   onDeleteFolder,
-  onDragEnd,
   onAddHabit
 }: FolderCardProps) => {
   const [isOpen, setIsOpen] = useState(true);
@@ -66,18 +62,6 @@ const FolderCard = ({
       case "pink": return "text-pink-500";
       default: return "text-blue-500";
     }
-  };
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  );
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    onDragEnd(event, folder.id);
   };
 
   return (
@@ -141,29 +125,18 @@ const FolderCard = ({
         <CollapsibleContent>
           <CardContent className="pt-0">
             {habits.length > 0 ? (
-              <DndContext 
-                sensors={sensors} 
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext 
-                  items={habits.map(habit => habit.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {habits.map((habit) => (
-                      <SortableHabitCard
-                        key={habit.id}
-                        habit={habit}
-                        isCompleted={isCompleted(habit.id)}
-                        onToggleCompletion={onToggleCompletion}
-                        onDelete={onDeleteHabit}
-                        onEdit={onEditHabit}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {habits.map((habit) => (
+                  <SortableHabitCard
+                    key={habit.id}
+                    habit={habit}
+                    isCompleted={isCompleted(habit.id)}
+                    onToggleCompletion={onToggleCompletion}
+                    onDelete={onDeleteHabit}
+                    onEdit={onEditHabit}
+                  />
+                ))}
+              </div>
             ) : (
               <div className="text-center py-4 text-gray-500">
                 В этой папке еще нет привычек

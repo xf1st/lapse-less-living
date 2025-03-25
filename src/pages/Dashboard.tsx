@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,7 +12,8 @@ import {
   Home,
   Trophy,
   ShieldCheck,
-  FolderPlus
+  FolderPlus,
+  ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,8 +30,6 @@ import HabitForm from "@/components/habits/HabitForm";
 import ProgressCalendar from "@/components/habits/ProgressCalendar";
 import Stats from "@/components/habits/Stats";
 import Achievements from "@/components/habits/Achievements";
-import { DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
 import { SortableHabitCard } from "@/components/habits/SortableHabitCard";
 import FolderCard, { Folder } from "@/components/habits/FolderCard";
 import FolderForm from "@/components/habits/FolderForm";
@@ -66,14 +64,6 @@ const Dashboard = () => {
   const [editFolder, setEditFolder] = useState<Folder | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { toast } = useToast();
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  );
 
   const fetchHabits = useCallback(async () => {
     try {
@@ -415,26 +405,6 @@ const Dashboard = () => {
     );
   };
 
-  const handleDragEnd = async (event: DragEndEvent, folderId?: string) => {
-    const { active, over } = event;
-    
-    if (active.id !== over?.id) {
-      setHabits((habits) => {
-        const oldIndex = habits.findIndex((h) => h.id === active.id);
-        const newIndex = habits.findIndex((h) => h.id === over?.id);
-        
-        // Only perform the array move if both indexes were found
-        if (oldIndex !== -1 && newIndex !== -1) {
-          return arrayMove(habits, oldIndex, newIndex);
-        }
-        
-        return habits;
-      });
-      
-      // Here you would save the new order to the database if needed
-    }
-  };
-
   // Show main loader when authenticating
   if (authLoading) {
     return (
@@ -684,28 +654,56 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Stats and Achievements Section */}
+          {/* Stats and Achievements Section or Promo Banner */}
           {habits.length > 0 && (
             <>
-              <Stats 
-                habits={habits} 
-                entries={habitEntries} 
-                canViewStats={!!userPlan?.has_statistics} 
-              />
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <ProgressCalendar 
-                  habits={habits} 
-                  entries={habitEntries} 
-                  onEntriesChange={fetchHabitEntries}
-                  canViewStats={!!userPlan?.has_statistics}
-                />
-                
-                <Achievements 
-                  habits={habits} 
-                  canViewAchievements={!!userPlan?.has_achievements} 
-                />
-              </div>
+              {userPlan?.id === "basic" ? (
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-8 shadow-sm">
+                  <h3 className="text-xl font-bold text-brand-blue mb-2">Обновите до Премиум тарифа</h3>
+                  <p className="text-gray-700 mb-4">
+                    Получите доступ к расширенной статистике, календарю прогресса, достижениям и многому другому.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                    <div className="bg-white rounded-md p-3 shadow-sm">
+                      <BarChart3 className="h-6 w-6 text-green-500 mb-2" />
+                      <p className="font-medium">Детальная статистика</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 shadow-sm">
+                      <Calendar className="h-6 w-6 text-blue-500 mb-2" />
+                      <p className="font-medium">Календарь прогресса</p>
+                    </div>
+                    <div className="bg-white rounded-md p-3 shadow-sm">
+                      <Trophy className="h-6 w-6 text-amber-500 mb-2" />
+                      <p className="font-medium">Система достижений</p>
+                    </div>
+                  </div>
+                  <Button className="bg-brand-blue hover:bg-brand-blue/90">
+                    Обновить тариф <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Stats 
+                    habits={habits} 
+                    entries={habitEntries} 
+                    canViewStats={!!userPlan?.has_statistics} 
+                  />
+                  
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <ProgressCalendar 
+                      habits={habits} 
+                      entries={habitEntries} 
+                      onEntriesChange={fetchHabitEntries}
+                      canViewStats={!!userPlan?.has_statistics}
+                    />
+                    
+                    <Achievements 
+                      habits={habits} 
+                      canViewAchievements={!!userPlan?.has_achievements} 
+                    />
+                  </div>
+                </>
+              )}
             </>
           )}
 
@@ -729,7 +727,6 @@ const Dashboard = () => {
                   onEditHabit={editHabitHandler}
                   onEditFolder={editFolderHandler}
                   onDeleteFolder={deleteFolder}
-                  onDragEnd={handleDragEnd}
                   onAddHabit={(folderId) => createHabit(folderId)}
                 />
               ))}

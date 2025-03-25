@@ -8,7 +8,6 @@ import {
   Edit,
   Trash2,
   Flame,
-  GripVertical
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +40,6 @@ type HabitCardProps = {
   onToggleCompletion?: (habitId: string) => Promise<void>;
   onDelete: (habitId: string) => Promise<void>;
   onEdit?: (habit: Habit) => void;
-  onReorderStart?: () => { attributes: any; listeners: any } | void;
 };
 
 const HabitCard = ({ 
@@ -50,7 +48,6 @@ const HabitCard = ({
   onToggleCompletion,
   onDelete,
   onEdit,
-  onReorderStart
 }: HabitCardProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -131,9 +128,6 @@ const HabitCard = ({
     }
   };
 
-  // Get drag handle props if available
-  const dragHandleProps = onReorderStart ? onReorderStart() : null;
-
   return (
     <Card className="shadow-sm border hover:shadow-md transition-shadow">
       <CardHeader className="pb-2 flex flex-row items-start justify-between space-y-0">
@@ -145,24 +139,10 @@ const HabitCard = ({
               <Badge variant="outline" className="text-xs font-normal">
                 {formatFrequency(habit.frequency)}
               </Badge>
-              {habit.current_streak > 0 && (
-                <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 text-xs">
-                  <Flame className="h-3 w-3 mr-1" />
-                  <span>{habit.current_streak} {habit.current_streak === 1 ? "день" : "дней"}</span>
-                </Badge>
-              )}
             </div>
           </div>
         </div>
         <div className="flex items-center space-x-1">
-          {dragHandleProps && (
-            <div 
-              className="cursor-move touch-none p-1" 
-              {...dragHandleProps}
-            >
-              <GripVertical className="h-4 w-4 text-gray-400" />
-            </div>
-          )}
           <Button 
             variant="ghost" 
             size="icon" 
@@ -182,6 +162,17 @@ const HabitCard = ({
         </div>
       </CardHeader>
       <CardContent>
+        {/* Big bold streak count */}
+        <div className="flex items-center justify-center py-3">
+          <div className="text-center">
+            <div className="text-4xl font-bold text-brand-blue">{habit.current_streak}</div>
+            <div className="text-sm text-gray-500 mt-1">
+              {habit.current_streak === 1 ? "день" : 
+               (habit.current_streak > 1 && habit.current_streak < 5) ? "дня" : "дней"}
+            </div>
+          </div>
+        </div>
+
         {habit.description && (
           <p className="text-sm text-gray-600 mb-2">{habit.description}</p>
         )}
@@ -189,6 +180,13 @@ const HabitCard = ({
           <Calendar className="h-3 w-3 mr-1" />
           <span>Начало: {formatStartDate(habit.start_date)}</span>
         </div>
+        {habit.longest_streak > 0 && (
+          <div className="flex items-center text-xs text-gray-500 mt-1">
+            <Flame className="h-3 w-3 mr-1 text-amber-500" />
+            <span>Рекорд: {habit.longest_streak} {habit.longest_streak === 1 ? "день" : 
+              (habit.longest_streak > 1 && habit.longest_streak < 5) ? "дня" : "дней"}</span>
+          </div>
+        )}
       </CardContent>
       <CardFooter className="pt-0">
         <Button
