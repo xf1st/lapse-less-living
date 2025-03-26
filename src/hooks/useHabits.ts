@@ -5,6 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Habit } from "@/components/habits/HabitCard";
 import { Folder } from "@/components/habits/FolderCard";
 import { Plan } from "@/types/habit";
+import { calculateDaysSinceStart } from "@/utils/habitUtils";
+import { differenceInDays } from "date-fns";
 
 export type HabitEntry = {
   id: string;
@@ -162,12 +164,29 @@ export const useHabits = (userId: string | undefined) => {
         ? new Date(lastRelapse.completed_at) 
         : new Date(0); // If no relapse, use epoch time
       
-      // Count current streak (days since last relapse)
-      const entriesAfterRelapse = habitEntries.filter(entry => 
-        !entry.is_relapse && new Date(entry.completed_at) > lastRelapseDate
-      );
+      let currentStreak = 0;
       
-      const currentStreak = entriesAfterRelapse.length;
+      if (habit.start_date) {
+        const startDate = new Date(habit.start_date);
+        const today = new Date();
+        
+        // Reset time parts for accurate day comparison
+        startDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        
+        // If start date is in the future, streak is 0
+        if (startDate <= today) {
+          // If there was a relapse after the start date
+          if (lastRelapseDate > startDate) {
+            // Use relapse date as new start
+            const daysSinceRelapse = differenceInDays(today, lastRelapseDate);
+            currentStreak = Math.max(0, daysSinceRelapse);
+          } else {
+            // No relapse (or relapse before start date), count from start date
+            currentStreak = differenceInDays(today, startDate) + 1;
+          }
+        }
+      }
       
       // Find longest streak
       let longestStreak = habit.longest_streak || 0;

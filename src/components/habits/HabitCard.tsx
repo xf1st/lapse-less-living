@@ -78,14 +78,14 @@ const HabitCard = ({
       {/* Main streak card */}
       <Card className="shadow-sm border hover:shadow-md transition-shadow overflow-hidden mb-2">
         <div className="flex items-center p-4">
-          <div className={cn("w-2 h-full rounded-sm self-stretch mr-3", getColorClass(habit.color))}></div>
+          <div className={cn("w-2 h-14 rounded-sm self-stretch mr-3", getColorClass(habit.color || "blue"))}></div>
           <div className="flex-1">
             <h3 className="font-semibold text-lg">{habit.name}</h3>
           </div>
         </div>
         
         {/* Streak display component */}
-        <HabitStreakDisplay currentStreak={habit.current_streak} />
+        <HabitStreakDisplay currentStreak={habit.current_streak || 0} />
       </Card>
       
       {/* Details and controls card */}

@@ -2,6 +2,7 @@
 import React from "react";
 import { PlusCircle, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type DashboardHeaderProps = {
   createHabit: () => void;
@@ -9,26 +10,30 @@ type DashboardHeaderProps = {
 };
 
 const DashboardHeader = ({ createHabit, createFolder }: DashboardHeaderProps) => {
+  const isMobile = useIsMobile();
+  
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className={`flex items-center ${isMobile ? 'justify-center' : 'justify-between'} mb-6`}>
       <h1 className="text-2xl font-bold text-gray-900">Мои привычки</h1>
-      <div className="flex gap-2">
-        <Button 
-          onClick={createFolder}
-          variant="outline"
-          className="border-brand-blue text-brand-blue"
-        >
-          <FolderPlus className="mr-2 h-4 w-4" />
-          Новая папка
-        </Button>
-        <Button 
-          onClick={createHabit}
-          className="bg-brand-blue hover:bg-brand-blue/90"
-        >
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Новая привычка
-        </Button>
-      </div>
+      {!isMobile && (
+        <div className="flex gap-2">
+          <Button 
+            onClick={createFolder}
+            variant="outline"
+            className="border-brand-blue text-brand-blue"
+          >
+            <FolderPlus className="mr-2 h-4 w-4" />
+            Новая папка
+          </Button>
+          <Button 
+            onClick={createHabit}
+            className="bg-brand-blue hover:bg-brand-blue/90"
+          >
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Новая привычка
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

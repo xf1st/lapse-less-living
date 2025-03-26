@@ -9,11 +9,11 @@ import {
   Flame,
   AlertTriangle
 } from "lucide-react";
-import { Habit } from "@/types/habit";
-import { formatFrequency, formatStartDate } from "@/utils/habitUtils";
+import { HabitType } from "@/types/habit";
+import { formatFrequency, formatStartDate, getStreakText } from "@/utils/habitUtils";
 
 type HabitDetailsProps = {
-  habit: Habit;
+  habit: HabitType;
   isSubmitting: boolean;
   onEdit: () => void;
   onDelete: (habitId: string) => Promise<void>;

@@ -1,5 +1,5 @@
 
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { ru } from "date-fns/locale";
 
 export const getColorClass = (color: string) => {
@@ -38,4 +38,25 @@ export const getStreakText = (count: number) => {
   if (count === 1) return "день";
   if (count > 1 && count < 5) return "дня";
   return "дней";
+};
+
+export const calculateDaysSinceStart = (startDate: string) => {
+  if (!startDate) return 0;
+  
+  try {
+    const start = new Date(startDate);
+    const today = new Date();
+    
+    // Reset time to 00:00:00 for both dates to get whole days
+    start.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    
+    // Calculate difference including the start date
+    const daysDifference = differenceInDays(today, start) + 1;
+    
+    return daysDifference > 0 ? daysDifference : 0;
+  } catch (error) {
+    console.error("Error calculating days since start:", error);
+    return 0;
+  }
 };
