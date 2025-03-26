@@ -1,120 +1,121 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { toast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Folder } from "@/components/habits/FolderCard";
-import { Habit } from "@/components/habits/HabitCard";
-import ColorPicker from "./ColorPicker";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { ru } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { ColorPicker } from "@/components/ui/color-picker";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Folder } from "@/hooks/useHabitFolders";
+
+const formSchema = z.object({
+  name: z.string().min(2, {
+    message: "Название должно содержать не менее 2 символов.",
+  }),
+  description: z.string().optional(),
+  frequency: z.enum(["daily", "weekly", "monthly"]),
+  color: z.string().default("#0000FF"),
+  folder_id: z.string().nullable().optional(),
+  start_date: z.string().optional(),
+});
+
+type FormData = z.infer<typeof formSchema>;
 
 type HabitFormProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => Promise<void>;
+  onSuccess?: () => void;
   maxHabits: number;
   currentHabitsCount: number;
-  habit?: Habit | null;
-  folders?: Folder[];
+  habit?: {
+    id?: string;
+    name?: string;
+    description?: string | null;
+    frequency?: string;
+    color?: string;
+    folder_id?: string | null;
+    start_date?: string;
+  };
+  folders: Folder[];
 };
 
-const HabitForm = ({ 
-  isOpen, 
-  onClose, 
-  onSuccess, 
-  maxHabits, 
+const HabitForm = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  maxHabits,
   currentHabitsCount,
   habit,
-  folders = []
+  folders
 }: HabitFormProps) => {
-  const { toast } = useToast();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [frequency, setFrequency] = useState("daily");
-  const [color, setColor] = useState("blue");
-  const [folderId, setFolderId] = useState<string | null>(null);
-  const [startDate, setStartDate] = useState<Date>(new Date());
-  const isMobile = useIsMobile();
+  const [date, setDate] = React.useState<Date>();
 
-  const isEditing = !!habit?.id;
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: habit?.name || "",
+      description: habit?.description || "",
+      frequency: habit?.frequency || "daily",
+      color: habit?.color || "#0000FF",
+      folder_id: habit?.folder_id || null,
+      start_date: habit?.start_date || new Date().toISOString().split('T')[0],
+    },
+  });
 
-  useEffect(() => {
-    if (habit) {
-      setName(habit.name || "");
-      setDescription(habit.description || "");
-      setFrequency(habit.frequency || "daily");
-      setColor(habit.color || "blue");
-      setFolderId(habit.folder_id || null);
-      if (habit.start_date) {
-        setStartDate(new Date(habit.start_date));
-      }
-    } else {
-      // Reset form
-      setName("");
-      setDescription("");
-      setFrequency("daily");
-      setColor("blue");
-      setFolderId(null);
-      setStartDate(new Date());
-    }
-  }, [habit, isOpen]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!isEditing && currentHabitsCount >= maxHabits) {
-      toast({
-        title: "Лимит привычек",
-        description: `Ваш тариф позволяет создать максимум ${maxHabits} привычек. Обновите тариф для добавления большего количества привычек.`,
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!name.trim()) {
-      toast({
-        title: "Ошибка",
-        description: "Название привычки не может быть пустым",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const onSubmit = async (values: FormData) => {
     try {
       setIsSubmitting(true);
-
-      if (isEditing) {
+      
+      // Validate that start date is not in the future
+      if (values.start_date) {
+        const startDate = new Date(values.start_date);
+        const today = new Date();
+        
+        // Reset hours to compare just the date
+        startDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        
+        if (startDate > today) {
+          toast({
+            title: "Ошибка",
+            description: "Нельзя установить дату начала в будущем",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      
+      // Continue with form submission
+      if (habit?.id) {
         // Update existing habit
         const { error } = await supabase
           .from("habits")
           .update({
-            name,
-            description,
-            frequency,
-            color,
-            folder_id: folderId,
-            start_date: startDate.toISOString(),
-            updated_at: new Date().toISOString(),
+            name: values.name,
+            description: values.description,
+            frequency: values.frequency,
+            color: values.color,
+            folder_id: values.folder_id || null,
+            start_date: values.start_date
           })
           .eq("id", habit.id);
 
@@ -126,14 +127,23 @@ const HabitForm = ({
         });
       } else {
         // Create new habit
+        if (currentHabitsCount >= maxHabits) {
+          toast({
+            title: "Лимит привычек достигнут",
+            description: `Максимальное количество привычек для вашего тарифа: ${maxHabits}`,
+            variant: "destructive",
+          });
+          return;
+        }
+
         const { error } = await supabase.from("habits").insert({
-          name,
-          description,
-          frequency,
-          color,
-          folder_id: folderId,
-          start_date: startDate.toISOString(),
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          name: values.name,
+          description: values.description,
+          frequency: values.frequency,
+          color: values.color,
+          user_id: user?.id,
+          folder_id: values.folder_id || null,
+          start_date: values.start_date
         });
 
         if (error) throw error;
@@ -144,8 +154,13 @@ const HabitForm = ({
         });
       }
 
-      await onSuccess();
+      // Reset form and close dialog
+      form.reset();
       onClose();
+      
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error: any) {
       toast({
         title: "Ошибка",
@@ -159,142 +174,102 @@ const HabitForm = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Редактировать привычку" : "Создать новую привычку"}
-          </DialogTitle>
+          <DialogTitle>{habit?.id ? "Редактировать привычку" : "Создать привычку"}</DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? "Измените детали привычки, от которой хотите избавиться"
-              : "Создайте новую привычку, от которой хотите избавиться"}
+            {habit?.id ? "Измените детали вашей привычки." : "Добавьте новую привычку в свою коллекцию."}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Название
-              </Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="col-span-3"
-                placeholder="Например: Курение"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">
-                Описание
-              </Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="col-span-3"
-                placeholder="Дополнительная информация о привычке"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="folder" className="text-right">
-                Папка
-              </Label>
-              <Select
-                value={folderId || "none"}
-                onValueChange={(value) => setFolderId(value === "none" ? null : value)}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Без папки" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Без папки</SelectItem>
-                  {folders.map((folder) => (
-                    <SelectItem key={folder.id} value={folder.id}>
-                      {folder.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="start-date" className="text-right">
-                Дата начала
-              </Label>
-              <div className="col-span-3">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate ? format(startDate, "d MMMM yyyy", { locale: ru }) : "Выберите дату"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={startDate}
-                      onSelect={(date) => setStartDate(date || new Date())}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="frequency" className="text-right">
-                Периодичность
-              </Label>
-              <div className="col-span-3">
-                <RadioGroup
-                  value={frequency}
-                  onValueChange={setFrequency}
+        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="name">Название</Label>
+            <Input id="name" placeholder="Название вашей привычки" {...form.register("name")} />
+            {form.formState.errors.name && (
+              <p className="text-sm text-red-500">{form.formState.errors.name.message}</p>
+            )}
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="description">Описание</Label>
+            <Input id="description" placeholder="Дополнительное описание" {...form.register("description")} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="frequency">Частота</Label>
+            <Select defaultValue={habit?.frequency || "daily"} onValueChange={form.setValue.bind(null, 'frequency')}>
+              <SelectTrigger id="frequency">
+                <SelectValue placeholder="Выберите частоту" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="daily">Ежедневно</SelectItem>
+                <SelectItem value="weekly">Еженедельно</SelectItem>
+                <SelectItem value="monthly">Ежемесячно</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2">
+            <Label>Цвет</Label>
+            <ColorPicker
+              value={form.watch("color")}
+              onChange={form.setValue.bind(null, 'color')}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="folder_id">Папка</Label>
+            <Select
+              defaultValue={habit?.folder_id || ""}
+              onValueChange={(value) => form.setValue("folder_id", value === "" ? null : value)}
+            >
+              <SelectTrigger id="folder_id">
+                <SelectValue placeholder="Выберите папку" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Без папки</SelectItem>
+                {folders.map((folder) => (
+                  <SelectItem key={folder.id} value={folder.id}>
+                    {folder.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2">
+            <Label>Дата начала</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
                   className={cn(
-                    "flex flex-wrap gap-2",
-                    isMobile ? "flex-col" : ""
+                    "w-[240px] justify-start text-left font-normal",
+                    !date && "text-muted-foreground"
                   )}
                 >
-                  <div className="flex items-center space-x-2 border p-2 rounded-md">
-                    <RadioGroupItem value="daily" id="daily" />
-                    <Label htmlFor="daily">Ежедневно</Label>
-                  </div>
-                  <div className="flex items-center space-x-2 border p-2 rounded-md">
-                    <RadioGroupItem value="weekly" id="weekly" />
-                    <Label htmlFor="weekly">Еженедельно</Label>
-                  </div>
-                  <div className="flex items-center space-x-2 border p-2 rounded-md">
-                    <RadioGroupItem value="monthly" id="monthly" />
-                    <Label htmlFor="monthly">Ежемесячно</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">Цвет</Label>
-              <div className="col-span-3">
-                <ColorPicker 
-                  value={color} 
-                  onValueChange={setColor} 
+                  {date ? format(date, "PPP") : format(new Date(), "PPP")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center" side="bottom">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={(newDate) => {
+                    setDate(newDate);
+                    if (newDate) {
+                      form.setValue("start_date", newDate.toISOString().split('T')[0]);
+                    }
+                  }}
+                  disabled={(date) =>
+                    date > new Date()
+                  }
+                  initialFocus
                 />
-              </div>
-            </div>
+              </PopoverContent>
+            </Popover>
           </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isSubmitting}
-            >
-              Отмена
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isEditing ? "Сохранить" : "Создать"}
-            </Button>
-          </DialogFooter>
         </form>
+        <DialogFooter>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Сохранение..." : "Сохранить"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

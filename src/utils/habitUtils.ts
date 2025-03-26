@@ -1,5 +1,5 @@
 
-import { format, differenceInDays, isFuture, isToday } from "date-fns";
+import { format, differenceInDays, isFuture, isToday, parseISO } from "date-fns";
 import { ru } from "date-fns/locale";
 
 export const getColorClass = (color: string) => {
@@ -80,6 +80,64 @@ export const calculateDaysSinceStart = (startDate: string) => {
     return daysDifference > 0 ? daysDifference : 0;
   } catch (error) {
     console.error("Error calculating days since start:", error);
+    return 0;
+  }
+};
+
+export const isDateInFuture = (dateString: string): boolean => {
+  try {
+    const date = new Date(dateString);
+    return isFuture(date);
+  } catch (error) {
+    console.error("Error checking future date:", error);
+    return false;
+  }
+};
+
+export const getCurrentStreak = (
+  startDate: string,
+  lastRelapseDate: string | null
+): number => {
+  if (!startDate) return 0;
+  
+  try {
+    const start = new Date(startDate);
+    const today = new Date();
+    
+    // Reset time parts for accurate comparison
+    start.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    
+    // If the start date is in the future, streak is 0
+    if (isFuture(start)) {
+      return 0;
+    }
+    
+    if (lastRelapseDate) {
+      const relapseDate = new Date(lastRelapseDate);
+      relapseDate.setHours(0, 0, 0, 0);
+      
+      // If relapse is after the start date
+      if (relapseDate >= start) {
+        // Calculate streak from the day after the relapse
+        const dayAfterRelapse = new Date(relapseDate);
+        dayAfterRelapse.setDate(dayAfterRelapse.getDate() + 1);
+        
+        if (dayAfterRelapse <= today) {
+          return differenceInDays(today, dayAfterRelapse) + 1;
+        }
+        return 0;
+      }
+    }
+    
+    // No relapse or relapse before start date, calculate from start date
+    if (isToday(start)) {
+      return 1;
+    }
+    
+    return differenceInDays(today, start) + 1;
+  } catch (error) {
+    console.error("Error calculating current streak:", error);
     return 0;
   }
 };
