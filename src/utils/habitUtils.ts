@@ -1,5 +1,5 @@
 
-import { format, differenceInDays } from "date-fns";
+import { format, differenceInDays, isFuture, isToday } from "date-fns";
 import { ru } from "date-fns/locale";
 
 export const getColorClass = (color: string) => {
@@ -12,6 +12,19 @@ export const getColorClass = (color: string) => {
     case "indigo": return "bg-indigo-500";
     case "pink": return "bg-pink-500";
     default: return "bg-blue-500";
+  }
+};
+
+export const getTextColorClass = (color: string) => {
+  switch (color) {
+    case "blue": return "text-blue-500";
+    case "green": return "text-green-500";
+    case "red": return "text-red-500";
+    case "purple": return "text-purple-500";
+    case "yellow": return "text-yellow-500";
+    case "indigo": return "text-indigo-500";
+    case "pink": return "text-pink-500";
+    default: return "text-blue-500";
   }
 };
 
@@ -47,11 +60,21 @@ export const calculateDaysSinceStart = (startDate: string) => {
     const start = new Date(startDate);
     const today = new Date();
     
-    // Reset time to 00:00:00 for both dates to get whole days
+    // If the start date is in the future, return 0
+    if (isFuture(start)) {
+      return 0;
+    }
+    
+    // Reset time parts for accurate comparison
     start.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
     
-    // Calculate difference including the start date
+    // For today's date, count as 1 day
+    if (isToday(start)) {
+      return 1;
+    }
+    
+    // Calculate days between dates (add 1 to include today)
     const daysDifference = differenceInDays(today, start) + 1;
     
     return daysDifference > 0 ? daysDifference : 0;

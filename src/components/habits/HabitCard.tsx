@@ -85,7 +85,10 @@ const HabitCard = ({
         </div>
         
         {/* Streak display component */}
-        <HabitStreakDisplay currentStreak={habit.current_streak || 0} />
+        <HabitStreakDisplay 
+          currentStreak={habit.current_streak || 0} 
+          habitColor={habit.color || "blue"} 
+        />
       </Card>
       
       {/* Details and controls card */}

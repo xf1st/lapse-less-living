@@ -6,7 +6,7 @@ import { Habit } from "@/components/habits/HabitCard";
 import { Folder } from "@/components/habits/FolderCard";
 import { Plan } from "@/types/habit";
 import { calculateDaysSinceStart } from "@/utils/habitUtils";
-import { differenceInDays } from "date-fns";
+import { differenceInDays, isToday, parseISO } from "date-fns";
 
 export type HabitEntry = {
   id: string;
@@ -160,9 +160,6 @@ export const useHabits = (userId: string | undefined) => {
 
       // Find the most recent relapse (if any)
       const lastRelapse = habitEntries.find(entry => entry.is_relapse);
-      const lastRelapseDate = lastRelapse 
-        ? new Date(lastRelapse.completed_at) 
-        : new Date(0); // If no relapse, use epoch time
       
       let currentStreak = 0;
       
@@ -176,14 +173,31 @@ export const useHabits = (userId: string | undefined) => {
         
         // If start date is in the future, streak is 0
         if (startDate <= today) {
-          // If there was a relapse after the start date
-          if (lastRelapseDate > startDate) {
-            // Use relapse date as new start
-            const daysSinceRelapse = differenceInDays(today, lastRelapseDate);
-            currentStreak = Math.max(0, daysSinceRelapse);
+          if (lastRelapse) {
+            // If there was a relapse, check if it's after the start date
+            const relapseDate = new Date(lastRelapse.completed_at);
+            relapseDate.setHours(0, 0, 0, 0);
+            
+            if (relapseDate >= startDate) {
+              // Calculate streak from the day after the relapse
+              const dayAfterRelapse = new Date(relapseDate);
+              dayAfterRelapse.setDate(dayAfterRelapse.getDate() + 1);
+              
+              if (dayAfterRelapse <= today) {
+                currentStreak = differenceInDays(today, dayAfterRelapse) + 1;
+              }
+            } else {
+              // Relapse before start date, calculate from start date
+              currentStreak = differenceInDays(today, startDate) + 1;
+            }
           } else {
-            // No relapse (or relapse before start date), count from start date
+            // No relapse, calculate from start date
             currentStreak = differenceInDays(today, startDate) + 1;
+            
+            // If starting today, streak is 1
+            if (isToday(startDate)) {
+              currentStreak = 1;
+            }
           }
         }
       }
