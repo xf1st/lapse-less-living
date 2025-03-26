@@ -25,6 +25,7 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type HabitFormProps = {
   isOpen: boolean;
@@ -53,6 +54,7 @@ const HabitForm = ({
   const [color, setColor] = useState("blue");
   const [folderId, setFolderId] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<Date>(new Date());
+  const isMobile = useIsMobile();
 
   const isEditing = !!habit?.id;
 
@@ -157,7 +159,7 @@ const HabitForm = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Редактировать привычку" : "Создать новую привычку"}
@@ -245,24 +247,29 @@ const HabitForm = ({
               <Label htmlFor="frequency" className="text-right">
                 Периодичность
               </Label>
-              <RadioGroup
-                value={frequency}
-                onValueChange={setFrequency}
-                className="grid grid-cols-3 col-span-3 gap-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="daily" id="daily" />
-                  <Label htmlFor="daily">Ежедневно</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="weekly" id="weekly" />
-                  <Label htmlFor="weekly">Еженедельно</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="monthly" id="monthly" />
-                  <Label htmlFor="monthly">Ежемесячно</Label>
-                </div>
-              </RadioGroup>
+              <div className="col-span-3">
+                <RadioGroup
+                  value={frequency}
+                  onValueChange={setFrequency}
+                  className={cn(
+                    "flex flex-wrap gap-2",
+                    isMobile ? "flex-col" : ""
+                  )}
+                >
+                  <div className="flex items-center space-x-2 border p-2 rounded-md">
+                    <RadioGroupItem value="daily" id="daily" />
+                    <Label htmlFor="daily">Ежедневно</Label>
+                  </div>
+                  <div className="flex items-center space-x-2 border p-2 rounded-md">
+                    <RadioGroupItem value="weekly" id="weekly" />
+                    <Label htmlFor="weekly">Еженедельно</Label>
+                  </div>
+                  <div className="flex items-center space-x-2 border p-2 rounded-md">
+                    <RadioGroupItem value="monthly" id="monthly" />
+                    <Label htmlFor="monthly">Ежемесячно</Label>
+                  </div>
+                </RadioGroup>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right">Цвет</Label>
