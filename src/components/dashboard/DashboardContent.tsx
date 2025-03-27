@@ -12,6 +12,7 @@ import PromoPlans from "./PromoPlans";
 import { Habit } from "@/components/habits/HabitCard";
 import { Folder } from "@/components/habits/FolderCard";
 import { Plan } from "@/types/habit";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type HabitEntry = {
   id: string;
@@ -52,6 +53,8 @@ const DashboardContent = ({
   deleteFolder,
   fetchHabitEntries,
 }: DashboardContentProps) => {
+  const isMobile = useIsMobile();
+  
   // Group habits by folder
   const unfolderedHabits = habits.filter(habit => !habit.folder_id);
   const folderHabits = folders.map(folder => ({
@@ -69,9 +72,10 @@ const DashboardContent = ({
   }
 
   const isBasicPlan = userPlan?.id === "basic";
+  const containerClass = isMobile ? "px-2" : "px-4 sm:px-6 md:px-8";
 
   return (
-    <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 md:px-8">
+    <div className={`max-w-7xl mx-auto py-6 ${containerClass}`}>
       <DashboardHeader createHabit={() => createHabit()} createFolder={createFolder} />
 
       {/* Stats and Achievements Section or Promo Banner */}
@@ -87,7 +91,7 @@ const DashboardContent = ({
                 canViewStats={!!userPlan?.has_statistics} 
               />
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
                 <ProgressCalendar 
                   habits={habits} 
                   entries={habitEntries} 

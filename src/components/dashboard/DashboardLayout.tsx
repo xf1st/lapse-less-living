@@ -7,6 +7,7 @@ import DashboardSidebar from "./DashboardSidebar";
 import DashboardMobileHeader from "./DashboardMobileHeader";
 import DashboardMobileActions from "./DashboardMobileActions";
 import { Plan } from "@/types/habit";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
@@ -22,6 +23,7 @@ const DashboardLayout = ({
   createFolder 
 }: DashboardLayoutProps) => {
   const { user, signOut, loading: authLoading } = useAuth();
+  const isMobile = useIsMobile();
 
   // Check if user is admin for admin panel access
   const isAdmin = user?.email === "admin@admin.com";
@@ -59,8 +61,10 @@ const DashboardLayout = ({
       />
 
       {/* Main content */}
-      <main className="flex-1 md:ml-64 pt-16 md:pt-0 pb-16">
-        {children}
+      <main className="flex-1 md:ml-64 pt-16 md:pt-0 pb-20 md:pb-0 overflow-x-hidden">
+        <div className={isMobile ? "px-3" : ""}>
+          {children}
+        </div>
       </main>
 
       {/* Mobile add buttons */}
