@@ -160,20 +160,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       // Make sure session exists before trying to sign out
       if (!session) {
-        toast({
-          title: "Внимание",
-          description: "Вы не авторизованы",
-          variant: "destructive",
-        });
+        console.log("No active session found when trying to sign out");
+        // Clear local state anyway
+        setSession(null);
+        setUser(null);
         setLoading(false);
         return;
       }
       
+      console.log("Signing out user:", user?.email);
       const { error } = await supabase.auth.signOut();
       
       if (error) {
+        console.error("Error during signOut:", error);
         throw error;
       }
+      
+      console.log("Supabase sign out completed successfully");
     } catch (err: any) {
       console.error("Logout error:", err);
       toast({
@@ -183,6 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
     } finally {
       // Ensure we clear local state even if Supabase logout failed
+      console.log("Clearing auth state in finally block");
       setSession(null);
       setUser(null);
       setLoading(false);

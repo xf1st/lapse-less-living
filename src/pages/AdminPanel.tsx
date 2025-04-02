@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -61,7 +61,8 @@ type Plan = {
 };
 
 const AdminPanel = () => {
-  const { user, signOut, loading: authLoading } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -74,13 +75,19 @@ const AdminPanel = () => {
 
   useEffect(() => {
     const checkAdminStatus = async () => {
-      if (!user) return;
+      if (!user) {
+        setIsAdmin(false);
+        setLoading(false);
+        return;
+      }
 
       try {
-        // Обновленное условие: sergeifreddy@gmail.com также является администратором
+        // Include sergeifreddy@gmail.com as admin
         if (user.email === "admin@admin.com" || user.email === "sergeifreddy@gmail.com") {
           setIsAdmin(true);
           setLoading(false);
+          fetchUsers();
+          fetchPlans();
           return;
         }
 
@@ -88,35 +95,88 @@ const AdminPanel = () => {
         
         if (error) throw error;
         
-        setIsAdmin(!!data);
+        const isUserAdmin = !!data;
+        setIsAdmin(isUserAdmin);
+        
+        if (isUserAdmin) {
+          fetchUsers();
+          fetchPlans();
+        }
       } catch (error) {
-        setIsAdmin(false);
         console.error("Error checking admin status:", error);
+        setIsAdmin(false);
+        toast({
+          title: "Ошибка",
+          description: "Не удалось проверить статус администратора",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
     };
 
     checkAdminStatus();
-  }, [user]);
-
-  useEffect(() => {
-    if (isAdmin) {
-      fetchUsers();
-      fetchPlans();
-    }
-  }, [isAdmin]);
+  }, [user, toast]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
       
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      // Get all users from auth schema
+      const { data: authUsers, error: authError } = await supabase
+        .from('auth_users_view')
+        .select('*');
       
-      if (authError) throw authError;
+      if (authError) {
+        // Fallback if view doesn't exist - try direct admin API
+        const adminUsersResponse = await supabase.auth.admin.listUsers();
+        if (adminUsersResponse.error) throw adminUsersResponse.error;
+        
+        if (!adminUsersResponse.data || !adminUsersResponse.data.users) {
+          throw new Error("Couldn't fetch users");
+        }
+        
+        const authUsersData = adminUsersResponse.data.users;
+        
+        // Get habits data to count habits and get plan_id
+        const { data: habitsData, error: habitsError } = await supabase
+          .from("habits")
+          .select("user_id, plan_id")
+          .is('deleted_at', null);
+          
+        if (habitsError) throw habitsError;
+        
+        const habitsCount: Record<string, number> = {};
+        const userPlans: Record<string, string> = {};
+        
+        if (habitsData) {
+          habitsData.forEach(habit => {
+            habitsCount[habit.user_id] = (habitsCount[habit.user_id] || 0) + 1;
+            if (habit.plan_id) {
+              userPlans[habit.user_id] = habit.plan_id;
+            }
+          });
+        }
+        
+        const combinedUsers = authUsersData.map(authUser => ({
+          id: authUser.id,
+          email: authUser.email,
+          last_sign_in_at: authUser.last_sign_in_at,
+          plan_id: userPlans[authUser.id] || "basic",
+          habits_count: habitsCount[authUser.id] || 0
+        }));
+        
+        setUsers(combinedUsers);
+        setLoading(false);
+        return;
+      }
       
-      if (!authUsers || !authUsers.users) return;
+      // If view exists, process the data
+      if (!authUsers) {
+        throw new Error("No users found");
+      }
       
+      // Get habits data to count habits and get plan_id
       const { data: habitsData, error: habitsError } = await supabase
         .from("habits")
         .select("user_id, plan_id")
@@ -124,8 +184,8 @@ const AdminPanel = () => {
         
       if (habitsError) throw habitsError;
       
-      const habitsCount = {};
-      const userPlans = {};
+      const habitsCount: Record<string, number> = {};
+      const userPlans: Record<string, string> = {};
       
       if (habitsData) {
         habitsData.forEach(habit => {
@@ -136,7 +196,7 @@ const AdminPanel = () => {
         });
       }
       
-      const combinedUsers = authUsers.users.map(authUser => ({
+      const combinedUsers = authUsers.map(authUser => ({
         id: authUser.id,
         email: authUser.email,
         last_sign_in_at: authUser.last_sign_in_at,
@@ -145,11 +205,11 @@ const AdminPanel = () => {
       }));
       
       setUsers(combinedUsers);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching users:", error);
       toast({
         title: "Ошибка загрузки пользователей",
-        description: "Не удалось загрузить список пользователей",
+        description: error.message || "Не удалось загрузить список пользователей",
         variant: "destructive",
       });
     } finally {
@@ -169,11 +229,11 @@ const AdminPanel = () => {
       if (data) {
         setPlans(data);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching plans:", error);
       toast({
         title: "Ошибка загрузки тарифов",
-        description: "Не удалось загрузить список тарифов",
+        description: error.message || "Не удалось загрузить список тарифов",
         variant: "destructive",
       });
     }
@@ -190,6 +250,25 @@ const AdminPanel = () => {
     try {
       setUpdating(true);
       
+      // First, get all habits for this user
+      const { data: userHabits, error: habitsError } = await supabase
+        .from("habits")
+        .select("id")
+        .eq("user_id", selectedUser.id);
+        
+      if (habitsError) throw habitsError;
+      
+      if (!userHabits || userHabits.length === 0) {
+        toast({
+          title: "Информация",
+          description: "У пользователя нет привычек для обновления",
+        });
+        setUpdating(false);
+        setSelectedUser(null);
+        return;
+      }
+      
+      // Update plan_id for all habits of this user
       const { error } = await supabase
         .from("habits")
         .update({ plan_id: userPlan })
@@ -207,11 +286,11 @@ const AdminPanel = () => {
       ));
       
       setSelectedUser(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating user plan:", error);
       toast({
         title: "Ошибка обновления тарифа",
-        description: "Не удалось обновить тариф пользователя",
+        description: error.message || "Не удалось обновить тариф пользователя",
         variant: "destructive",
       });
     } finally {
@@ -230,14 +309,19 @@ const AdminPanel = () => {
   };
 
   const filteredUsers = users.filter(user => 
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (!authLoading && (!user || (isAdmin === false))) {
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  if (!loading && (!user || (isAdmin === false))) {
     return <Navigate to="/dashboard" />;
   }
 
-  if (loading || authLoading || isAdmin === null) {
+  if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
         <Loader size="lg" />
@@ -270,7 +354,7 @@ const AdminPanel = () => {
               </a>
               <Button
                 variant="ghost"
-                onClick={() => signOut()}
+                onClick={handleSignOut}
                 className="text-gray-600 hover:text-red-500"
               >
                 <LogOut className="mr-2 h-4 w-4" />
@@ -444,7 +528,13 @@ const AdminPanel = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-6 text-gray-500">
-                        Пользователи не найдены
+                        {loading ? (
+                          <div className="flex justify-center">
+                            <Loader size="sm" />
+                          </div>
+                        ) : (
+                          "Пользователи не найдены"
+                        )}
                       </TableCell>
                     </TableRow>
                   )}

@@ -1,8 +1,7 @@
-
 import { useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { HabitType as Habit } from "@/types/habit";
-import { FolderType as Folder } from "@/types/habit";
+import { HabitType } from "@/types/habit";
+import { FolderType } from "@/types/habit";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import DashboardContent from "@/components/dashboard/DashboardContent";
 import { useHabits } from "@/hooks/useHabits";
@@ -12,9 +11,9 @@ import FolderForm from "@/components/habits/form/FolderForm";
 const Dashboard = () => {
   const { user } = useAuth();
   const [newHabitOpen, setNewHabitOpen] = useState(false);
-  const [editHabit, setEditHabit] = useState<Habit | null>(null);
+  const [editHabit, setEditHabit] = useState<HabitType | null>(null);
   const [newFolderOpen, setNewFolderOpen] = useState(false);
-  const [editFolder, setEditFolder] = useState<Folder | null>(null);
+  const [editFolder, setEditFolder] = useState<FolderType | null>(null);
 
   const {
     habits,
@@ -39,7 +38,7 @@ const Dashboard = () => {
     setNewHabitOpen(true);
   }, []);
 
-  const editHabitHandler = useCallback((habit: Habit) => {
+  const editHabitHandler = useCallback((habit: HabitType) => {
     setEditHabit(habit);
     setNewHabitOpen(true);
   }, []);
@@ -49,7 +48,7 @@ const Dashboard = () => {
     setNewFolderOpen(true);
   }, []);
 
-  const editFolderHandler = useCallback((folder: Folder) => {
+  const editFolderHandler = useCallback((folder: FolderType) => {
     setEditFolder(folder);
     setNewFolderOpen(true);
   }, []);
@@ -77,7 +76,6 @@ const Dashboard = () => {
         fetchHabitEntries={fetchHabitEntries}
       />
 
-      {/* Add Habit Form Dialog */}
       <HabitForm 
         isOpen={newHabitOpen} 
         onClose={() => {
@@ -91,7 +89,6 @@ const Dashboard = () => {
         folders={folders}
       />
 
-      {/* Add Folder Form Dialog */}
       <FolderForm
         isOpen={newFolderOpen}
         onClose={() => {
