@@ -17,8 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Folder } from "./FolderCard";
-import { Habit } from "./HabitCard";
+import { FolderType } from "@/types/habit";
+import { HabitType } from "@/types/habit";
 
 type HabitFormProps = {
   isOpen: boolean;
@@ -26,8 +26,8 @@ type HabitFormProps = {
   onSuccess: () => Promise<void>;
   maxHabits: number;
   currentHabitsCount: number;
-  habit?: Habit | null;
-  folders?: Folder[];
+  habit?: HabitType | null;
+  folders?: FolderType[];
 };
 
 const HabitForm = ({ 

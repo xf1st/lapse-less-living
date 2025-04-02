@@ -219,14 +219,14 @@ const HabitForm = ({
           <div className="grid gap-2">
             <Label htmlFor="folder_id">Папка</Label>
             <Select
-              defaultValue={habit?.folder_id || ""}
-              onValueChange={(value) => form.setValue("folder_id", value === "" ? null : value)}
+              defaultValue={habit?.folder_id || "none"}
+              onValueChange={(value) => form.setValue("folder_id", value === "none" ? null : value)}
             >
               <SelectTrigger id="folder_id">
                 <SelectValue placeholder="Выберите папку" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Без папки</SelectItem>
+                <SelectItem value="none">Без папки</SelectItem>
                 {folders.map((folder) => (
                   <SelectItem key={folder.id} value={folder.id}>
                     {folder.name}
