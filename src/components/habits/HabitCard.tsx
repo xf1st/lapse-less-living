@@ -9,7 +9,7 @@ import HabitStreakDisplay from "./HabitStreakDisplay";
 import HabitDetails from "./HabitDetails";
 import { HabitType } from "@/types/habit";
 
-type HabitCardProps = {
+export type HabitCardProps = {
   habit: HabitType;
   isCompleted: boolean;
   lastRelapseDate: string | null;
@@ -113,3 +113,4 @@ const HabitCard = ({
 };
 
 export default HabitCard;
+export type { HabitType } from "@/types/habit";

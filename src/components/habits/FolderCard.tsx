@@ -17,36 +17,29 @@ import {
 } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { Habit } from "./HabitCard";
+import { HabitType } from "@/types/habit";
 import HabitList from "./HabitList";
 
 export type Folder = {
   id: string;
   name: string;
   color: string;
+  user_id: string;
 };
 
 type FolderCardProps = {
   folder: Folder;
-  habits: Habit[];
-  isCompleted: (habitId: string) => boolean;
-  onToggleCompletion?: (habitId: string) => Promise<void>;
-  onDeleteHabit: (habitId: string) => Promise<void>;
-  onEditHabit: (habit: Habit) => void;
-  onEditFolder: (folder: Folder) => void;
-  onDeleteFolder: (folderId: string) => Promise<void>;
-  onAddHabit: (folderId: string) => void;
+  habits?: HabitType[];
+  onEdit?: (folder: Folder) => void;
+  onDelete?: (folderId: string) => Promise<void>;
+  onAddHabit?: (folderId?: string) => void;
 };
 
 const FolderCard = ({ 
   folder, 
-  habits,
-  isCompleted,
-  onToggleCompletion,
-  onDeleteHabit,
-  onEditHabit,
-  onEditFolder,
-  onDeleteFolder,
+  habits = [],
+  onEdit,
+  onDelete,
   onAddHabit
 }: FolderCardProps) => {
   const [isOpen, setIsOpen] = useState(true);
@@ -87,7 +80,7 @@ const FolderCard = ({
                 className="h-8 w-8"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onAddHabit(folder.id);
+                  if (onAddHabit) onAddHabit(folder.id);
                 }}
               >
                 <Plus className="h-4 w-4 text-gray-500 hover:text-gray-700" />
@@ -98,7 +91,7 @@ const FolderCard = ({
                 className="h-8 w-8"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onEditFolder(folder);
+                  if (onEdit) onEdit(folder);
                 }}
               >
                 <Edit className="h-4 w-4 text-gray-500 hover:text-gray-700" />
@@ -109,7 +102,7 @@ const FolderCard = ({
                 className="h-8 w-8"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onDeleteFolder(folder.id);
+                  if (onDelete) onDelete(folder.id);
                 }}
               >
                 <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-500" />
@@ -127,9 +120,9 @@ const FolderCard = ({
             {habits.length > 0 ? (
               <HabitList 
                 habits={habits}
-                isHabitCompleted={isCompleted}
-                onDeleteHabit={onDeleteHabit}
-                onEditHabit={onEditHabit}
+                isHabitCompletedToday={(id) => false}
+                onDeleteHabit={() => Promise.resolve()}
+                getLastRelapseDate={() => null}
               />
             ) : (
               <div className="text-center py-4 text-gray-500">

@@ -9,15 +9,13 @@ import HabitFolderList from "./HabitFolderList";
 import DashboardHeader from "./DashboardHeader";
 import PremiumBanner from "./PremiumBanner";
 import PromoPlans from "./PromoPlans";
-import { Habit } from "@/components/habits/HabitCard";
-import { Folder } from "@/components/habits/FolderCard";
-import { Plan } from "@/types/habit";
+import { HabitType, FolderType, Plan } from "@/types/habit";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { HabitEntryType } from "@/hooks/useHabitEntries";
 
 type DashboardContentProps = {
-  habits: Habit[];
-  folders: Folder[];
+  habits: HabitType[];
+  folders: FolderType[];
   habitEntries: HabitEntryType[];
   userPlan: Plan | null;
   loading: boolean;
@@ -26,8 +24,8 @@ type DashboardContentProps = {
   isHabitCompletedToday: (habitId: string) => boolean;
   getLastRelapseDate: (habitId: string) => string | null;
   deleteHabit: (habitId: string) => Promise<void>;
-  editHabitHandler: (habit: Habit) => void;
-  editFolderHandler: (folder: Folder) => void;
+  editHabitHandler: (habit: HabitType) => void;
+  editFolderHandler: (folder: FolderType) => void;
   deleteFolder: (folderId: string) => Promise<void>;
   fetchHabitEntries: () => Promise<void>;
 };

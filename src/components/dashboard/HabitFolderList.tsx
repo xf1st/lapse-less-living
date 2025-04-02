@@ -4,15 +4,10 @@ import { Button } from "@/components/ui/button";
 import { FilePlus } from "lucide-react";
 import HabitList from "@/components/habits/HabitList";
 import FolderCard from "@/components/habits/FolderCard";
-import { HabitType } from "@/types/habit";
+import { HabitType, FolderType } from "@/types/habit";
 
 type FolderWithHabits = {
-  folder: {
-    id: string;
-    name: string;
-    color: string;
-    user_id: string;
-  };
+  folder: FolderType;
   habits: HabitType[];
 };
 
@@ -23,7 +18,7 @@ type HabitFolderListProps = {
   getLastRelapseDate: (habitId: string) => string | null;
   onDeleteHabit: (habitId: string) => Promise<void>;
   onEditHabit?: (habit: HabitType) => void;
-  onEditFolder?: (folder: any) => void;
+  onEditFolder?: (folder: FolderType) => void;
   onDeleteFolder?: (folderId: string) => Promise<void>;
   onAddHabit: (folderId?: string) => void;
   onRelapseComplete?: () => Promise<void>;
