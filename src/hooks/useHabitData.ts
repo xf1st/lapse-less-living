@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { HabitType } from "@/types/habit";
-import { getCurrentStreak } from "@/utils/habitUtils";
+import { calculateCurrentStreak } from "@/utils/habitUtils";
 
 export type Habit = HabitType;
 
@@ -68,7 +68,7 @@ export const useHabitData = (getLastRelapseDate: (habitId: string) => string | n
       const lastRelapseDate = getLastRelapseDate(habit.id);
       
       // Calculate current streak
-      const currentStreak = getCurrentStreak(habit.start_date, lastRelapseDate);
+      const currentStreak = calculateCurrentStreak(habit.start_date, lastRelapseDate);
       
       // Find longest streak
       const longestStreak = Math.max(habit.longest_streak || 0, currentStreak);

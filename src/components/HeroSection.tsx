@@ -4,10 +4,13 @@ import { MapPin, BarChart2, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const HeroSection = () => {
   const isMobile = useIsMobile();
   const [isVisible, setIsVisible] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -30,11 +33,22 @@ const HeroSection = () => {
               Избавьтесь от своих привычек, держитесь целей и усиливайте свою жизнь с помощью умного трекера привычек.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Button className="bg-gradient-to-r from-brand-orange to-orange-500 hover:from-brand-orange/90 hover:to-orange-500/90 text-white rounded-full px-6 h-12 font-medium btn-hover-effect">
-                Начать сейчас
+              <Button 
+                className="bg-gradient-to-r from-brand-orange to-orange-500 hover:from-brand-orange/90 hover:to-orange-500/90 text-white rounded-full px-6 h-12 font-medium btn-hover-effect"
+                asChild
+              >
+                <Link to={user ? "/dashboard" : "/auth"}>
+                  Начать сейчас
+                </Link>
               </Button>
-              <Button variant="outline" className="rounded-full px-6 h-12 border-gray-300 font-medium hover:bg-gray-50 transition-colors">
-                Преимущества
+              <Button 
+                variant="outline" 
+                className="rounded-full px-6 h-12 border-gray-300 font-medium hover:bg-gray-50 transition-colors"
+                asChild
+              >
+                <a href="#feature-cards">
+                  Преимущества
+                </a>
               </Button>
             </div>
           </div>
@@ -82,11 +96,24 @@ const HeroSection = () => {
                 </div>
 
                 <div className="mt-6 flex justify-between">
-                  <Button variant="outline" size="sm" className="text-xs rounded-full bg-white border-gray-200 hover:bg-gray-50 transition-colors">
-                    Подробнее
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-xs rounded-full bg-white border-gray-200 hover:bg-gray-50 transition-colors"
+                    asChild
+                  >
+                    <a href="#how-it-works">
+                      Подробнее
+                    </a>
                   </Button>
-                  <Button size="sm" className="text-xs rounded-full bg-gradient-to-r from-brand-blue to-blue-500 hover:from-brand-blue/90 hover:to-blue-500/90 shadow-sm hover:shadow-md transition-all">
-                    Показать все
+                  <Button 
+                    size="sm" 
+                    className="text-xs rounded-full bg-gradient-to-r from-brand-blue to-blue-500 hover:from-brand-blue/90 hover:to-blue-500/90 shadow-sm hover:shadow-md transition-all"
+                    asChild
+                  >
+                    <Link to={user ? "/dashboard" : "/auth"}>
+                      Показать все
+                    </Link>
                   </Button>
                 </div>
               </div>

@@ -13,24 +13,18 @@ import { Habit } from "@/components/habits/HabitCard";
 import { Folder } from "@/components/habits/FolderCard";
 import { Plan } from "@/types/habit";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-type HabitEntry = {
-  id: string;
-  habit_id: string;
-  completed_at: string;
-  notes: string | null;
-  is_relapse: boolean;
-};
+import { HabitEntryType } from "@/hooks/useHabitEntries";
 
 type DashboardContentProps = {
   habits: Habit[];
   folders: Folder[];
-  habitEntries: HabitEntry[];
+  habitEntries: HabitEntryType[];
   userPlan: Plan | null;
   loading: boolean;
   createHabit: (folderId?: string) => void;
   createFolder: () => void;
   isHabitCompletedToday: (habitId: string) => boolean;
+  getLastRelapseDate: (habitId: string) => string | null;
   deleteHabit: (habitId: string) => Promise<void>;
   editHabitHandler: (habit: Habit) => void;
   editFolderHandler: (folder: Folder) => void;
@@ -47,6 +41,7 @@ const DashboardContent = ({
   createHabit,
   createFolder,
   isHabitCompletedToday,
+  getLastRelapseDate,
   deleteHabit,
   editHabitHandler,
   editFolderHandler,
@@ -114,11 +109,13 @@ const DashboardContent = ({
           folderHabits={folderHabits}
           unfolderedHabits={unfolderedHabits}
           isHabitCompletedToday={isHabitCompletedToday}
+          getLastRelapseDate={getLastRelapseDate}
           onDeleteHabit={deleteHabit}
           onEditHabit={editHabitHandler}
           onEditFolder={editFolderHandler}
           onDeleteFolder={deleteFolder}
           onAddHabit={createHabit}
+          onRelapseComplete={fetchHabitEntries}
         />
       ) : (
         <EmptyHabitState createHabit={() => createHabit()} />

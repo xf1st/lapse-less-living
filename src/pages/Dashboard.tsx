@@ -27,7 +27,8 @@ const Dashboard = () => {
     fetchHabitEntries,
     deleteHabit,
     deleteFolder,
-    isHabitCompletedToday
+    isHabitCompletedToday,
+    getLastRelapseDate
   } = useHabits(user?.id);
 
   const createHabit = useCallback((folderId?: string) => {
@@ -68,6 +69,7 @@ const Dashboard = () => {
         createHabit={createHabit}
         createFolder={createFolder}
         isHabitCompletedToday={isHabitCompletedToday}
+        getLastRelapseDate={getLastRelapseDate}
         deleteHabit={deleteHabit}
         editHabitHandler={editHabitHandler}
         editFolderHandler={editFolderHandler}

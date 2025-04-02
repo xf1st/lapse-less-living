@@ -84,6 +84,7 @@ export const useHabits = (userId: string | undefined) => {
     fetchUserPlan,
     deleteHabit,
     deleteFolder,
-    isHabitCompletedToday
+    isHabitCompletedToday,
+    getLastRelapseDate
   };
 };

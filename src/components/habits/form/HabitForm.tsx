@@ -1,8 +1,9 @@
+
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Folder } from "@/hooks/useHabitFolders";
+import { isDateInFuture } from "@/utils/habitUtils";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -30,7 +32,7 @@ const formSchema = z.object({
   }),
   description: z.string().optional(),
   frequency: z.enum(["daily", "weekly", "monthly"]),
-  color: z.string().default("#0000FF"),
+  color: z.string(),
   folder_id: z.string().nullable().optional(),
   start_date: z.string().optional(),
 });
@@ -66,15 +68,22 @@ const HabitForm = ({
 }: HabitFormProps) => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [date, setDate] = React.useState<Date>();
+  const { toast } = useToast();
+  
+  // Set default date to either habit start date or today
+  const defaultDate = habit?.start_date 
+    ? new Date(habit.start_date) 
+    : new Date();
+    
+  const [date, setDate] = useState<Date | undefined>(defaultDate);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: habit?.name || "",
       description: habit?.description || "",
-      frequency: habit?.frequency || "daily",
-      color: habit?.color || "#0000FF",
+      frequency: (habit?.frequency as "daily" | "weekly" | "monthly") || "daily",
+      color: habit?.color || "blue",
       folder_id: habit?.folder_id || null,
       start_date: habit?.start_date || new Date().toISOString().split('T')[0],
     },
@@ -85,23 +94,14 @@ const HabitForm = ({
       setIsSubmitting(true);
       
       // Validate that start date is not in the future
-      if (values.start_date) {
-        const startDate = new Date(values.start_date);
-        const today = new Date();
-        
-        // Reset hours to compare just the date
-        startDate.setHours(0, 0, 0, 0);
-        today.setHours(0, 0, 0, 0);
-        
-        if (startDate > today) {
-          toast({
-            title: "Ошибка",
-            description: "Нельзя установить дату начала в будущем",
-            variant: "destructive",
-          });
-          setIsSubmitting(false);
-          return;
-        }
+      if (values.start_date && isDateInFuture(values.start_date)) {
+        toast({
+          title: "Ошибка",
+          description: "Нельзя установить дату начала в будущем",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
       }
       
       // Continue with form submission
@@ -195,7 +195,10 @@ const HabitForm = ({
           </div>
           <div className="grid gap-2">
             <Label htmlFor="frequency">Частота</Label>
-            <Select defaultValue={habit?.frequency || "daily"} onValueChange={form.setValue.bind(null, 'frequency')}>
+            <Select 
+              defaultValue={form.getValues("frequency")} 
+              onValueChange={(value: "daily" | "weekly" | "monthly") => form.setValue("frequency", value)}
+            >
               <SelectTrigger id="frequency">
                 <SelectValue placeholder="Выберите частоту" />
               </SelectTrigger>
@@ -210,7 +213,7 @@ const HabitForm = ({
             <Label>Цвет</Label>
             <ColorPicker
               value={form.watch("color")}
-              onChange={form.setValue.bind(null, 'color')}
+              onChange={(value) => form.setValue("color", value)}
             />
           </div>
           <div className="grid gap-2">
@@ -264,12 +267,12 @@ const HabitForm = ({
               </PopoverContent>
             </Popover>
           </div>
+          <DialogFooter>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Сохранение..." : "Сохранить"}
+            </Button>
+          </DialogFooter>
         </form>
-        <DialogFooter>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Сохранение..." : "Сохранить"}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

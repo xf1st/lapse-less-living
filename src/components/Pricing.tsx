@@ -3,8 +3,12 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Pricing = () => {
+  const { user } = useAuth();
+  
   return (
     <section id="pricing" className="py-24 bg-white">
       <div className="container mx-auto px-4">
@@ -22,7 +26,7 @@ const Pricing = () => {
             <Card 
               key={index} 
               className={cn(
-                "relative overflow-hidden transition-all duration-300 hover:-translate-y-2 animate-fade-in",
+                "relative overflow-hidden transition-all duration-300 hover:-translate-y-2 animate-fade-in flex flex-col",
                 plan.popular ? "border-brand-blue shadow-lg shadow-blue-100" : "shadow-md",
                 plan.soon ? "opacity-75" : ""
               )}
@@ -39,7 +43,7 @@ const Pricing = () => {
                 <CardTitle className="text-2xl">{plan.name}</CardTitle>
                 <CardDescription>{plan.description}</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-grow">
                 <div className="mb-6">
                   <span className="text-4xl font-bold">{plan.price}</span>
                   {plan.period && <span className="text-gray-500 ml-2">{plan.period}</span>}
@@ -53,7 +57,7 @@ const Pricing = () => {
                   ))}
                 </ul>
               </CardContent>
-              <CardFooter>
+              <CardFooter className="flex justify-center">
                 <Button 
                   className={cn(
                     "w-full",
@@ -61,8 +65,15 @@ const Pricing = () => {
                     plan.soon ? "opacity-75 cursor-not-allowed" : ""
                   )}
                   disabled={plan.soon}
+                  asChild={!plan.soon}
                 >
-                  {plan.soon ? "Скоро" : "Выбрать план"}
+                  {plan.soon ? (
+                    <span>Скоро</span>
+                  ) : (
+                    <Link to={user ? "/dashboard" : "/auth"}>
+                      Выбрать план
+                    </Link>
+                  )}
                 </Button>
               </CardFooter>
               {plan.soon && (

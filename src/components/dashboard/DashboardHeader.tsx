@@ -14,7 +14,7 @@ const DashboardHeader = ({ createHabit, createFolder }: DashboardHeaderProps) =>
 
   return (
     <div className="flex items-center justify-between mb-8">
-      <h1 className={`text-2xl font-bold ${isMobile ? 'mx-auto' : ''}`}>
+      <h1 className={`text-2xl font-bold ${isMobile ? 'w-full text-center' : ''}`}>
         Мои привычки
       </h1>
       

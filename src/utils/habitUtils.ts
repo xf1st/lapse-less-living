@@ -1,5 +1,5 @@
 
-import { format, differenceInDays, isFuture, isToday, parseISO } from "date-fns";
+import { format, differenceInDays, isFuture, isToday, addDays, isAfter } from "date-fns";
 import { ru } from "date-fns/locale";
 
 export const getColorClass = (color: string) => {
@@ -53,91 +53,64 @@ export const getStreakText = (count: number) => {
   return "дней";
 };
 
-export const calculateDaysSinceStart = (startDate: string) => {
+// Calculate current streak based on start date and last relapse date
+export const calculateCurrentStreak = (startDate: string, lastRelapseDate: string | null): number => {
   if (!startDate) return 0;
   
   try {
-    const start = new Date(startDate);
-    const today = new Date();
+    // Parse dates and remove time component
+    const startDateObj = new Date(startDate);
+    startDateObj.setHours(0, 0, 0, 0);
     
-    // If the start date is in the future, return 0
-    if (isFuture(start)) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // If start date is in the future, streak is 0
+    if (isAfter(startDateObj, today)) {
       return 0;
     }
     
-    // Reset time parts for accurate comparison
-    start.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
-    
-    // For today's date, count as 1 day
-    if (isToday(start)) {
-      return 1;
-    }
-    
-    // Calculate days between dates (add 1 to include today)
-    const daysDifference = differenceInDays(today, start) + 1;
-    
-    return daysDifference > 0 ? daysDifference : 0;
-  } catch (error) {
-    console.error("Error calculating days since start:", error);
-    return 0;
-  }
-};
-
-export const isDateInFuture = (dateString: string): boolean => {
-  try {
-    const date = new Date(dateString);
-    return isFuture(date);
-  } catch (error) {
-    console.error("Error checking future date:", error);
-    return false;
-  }
-};
-
-export const getCurrentStreak = (
-  startDate: string,
-  lastRelapseDate: string | null
-): number => {
-  if (!startDate) return 0;
-  
-  try {
-    const start = new Date(startDate);
-    const today = new Date();
-    
-    // Reset time parts for accurate comparison
-    start.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
-    
-    // If the start date is in the future, streak is 0
-    if (isFuture(start)) {
-      return 0;
-    }
-    
+    // If there was a relapse, calculate from the day after the relapse
     if (lastRelapseDate) {
       const relapseDate = new Date(lastRelapseDate);
       relapseDate.setHours(0, 0, 0, 0);
       
       // If relapse is after the start date
-      if (relapseDate >= start) {
-        // Calculate streak from the day after the relapse
-        const dayAfterRelapse = new Date(relapseDate);
-        dayAfterRelapse.setDate(dayAfterRelapse.getDate() + 1);
+      if (isAfter(relapseDate, startDateObj) || relapseDate.getTime() === startDateObj.getTime()) {
+        // Add one day to relapse date for streak calculation
+        const dayAfterRelapse = addDays(relapseDate, 1);
         
-        if (dayAfterRelapse <= today) {
-          return differenceInDays(today, dayAfterRelapse) + 1;
+        // If the day after relapse is in the future, streak is 0
+        if (isAfter(dayAfterRelapse, today)) {
+          return 0;
         }
-        return 0;
+        
+        // Calculate days from day after relapse to today (inclusive)
+        return differenceInDays(today, dayAfterRelapse) + 1;
       }
     }
     
     // No relapse or relapse before start date, calculate from start date
-    if (isToday(start)) {
-      return 1;
-    }
-    
-    return differenceInDays(today, start) + 1;
+    return differenceInDays(today, startDateObj) + 1;
   } catch (error) {
     console.error("Error calculating current streak:", error);
     return 0;
+  }
+};
+
+// Check if a date is in the future
+export const isDateInFuture = (dateString: string): boolean => {
+  try {
+    const dateObj = new Date(dateString);
+    const today = new Date();
+    
+    // Compare dates without time component
+    dateObj.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    
+    return isAfter(dateObj, today);
+  } catch (error) {
+    console.error("Error checking future date:", error);
+    return false;
   }
 };

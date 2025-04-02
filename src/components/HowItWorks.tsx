@@ -1,8 +1,13 @@
 
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 const HowItWorks = () => {
+  const { user } = useAuth();
+
   return (
     <section id="how-it-works" className="py-24 bg-gradient-to-b from-white to-gray-50">
       <div className="container mx-auto px-4">
@@ -29,7 +34,7 @@ const HowItWorks = () => {
               <p className="text-gray-600 mb-4">{step.description}</p>
               
               {index < steps.length - 1 && (
-                <div className="hidden md:block absolute top-1/2 -right-4 transform translate-x-full">
+                <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-x-2">
                   <ArrowRight className="text-brand-blue" />
                 </div>
               )}
@@ -41,9 +46,14 @@ const HowItWorks = () => {
           <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto">
             Наше приложение поможет вам ежедневно отслеживать прогресс и построить новые, более здоровые привычки
           </p>
-          <button className="bg-brand-blue hover:bg-brand-blue/90 text-white font-semibold py-3 px-8 rounded-full transition-all hover:shadow-lg">
-            Начать сейчас
-          </button>
+          <Button 
+            className="bg-brand-blue hover:bg-brand-blue/90 text-white font-semibold py-3 px-8 rounded-full transition-all hover:shadow-lg"
+            asChild
+          >
+            <Link to={user ? "/dashboard" : "/auth"}>
+              Начать сейчас
+            </Link>
+          </Button>
         </div>
       </div>
     </section>

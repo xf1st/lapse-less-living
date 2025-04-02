@@ -1,64 +1,99 @@
 
 import React from "react";
-import FolderCard, { Folder } from "@/components/habits/FolderCard";
-import { Habit } from "@/components/habits/HabitCard";
+import { Button } from "@/components/ui/button";
+import { FilePlus } from "lucide-react";
 import HabitList from "@/components/habits/HabitList";
+import FolderCard from "@/components/habits/FolderCard";
+import { HabitType } from "@/types/habit";
+
+type FolderWithHabits = {
+  folder: {
+    id: string;
+    name: string;
+    color: string;
+    user_id: string;
+  };
+  habits: HabitType[];
+};
 
 type HabitFolderListProps = {
-  folderHabits: Array<{
-    folder: Folder;
-    habits: Habit[];
-  }>;
-  unfolderedHabits: Habit[];
+  folderHabits: FolderWithHabits[];
+  unfolderedHabits: HabitType[];
   isHabitCompletedToday: (habitId: string) => boolean;
+  getLastRelapseDate: (habitId: string) => string | null;
   onDeleteHabit: (habitId: string) => Promise<void>;
-  onEditHabit: (habit: Habit) => void;
-  onEditFolder: (folder: Folder) => void;
-  onDeleteFolder: (folderId: string) => Promise<void>;
-  onAddHabit: (folderId: string) => void;
+  onEditHabit?: (habit: HabitType) => void;
+  onEditFolder?: (folder: any) => void;
+  onDeleteFolder?: (folderId: string) => Promise<void>;
+  onAddHabit: (folderId?: string) => void;
+  onRelapseComplete?: () => Promise<void>;
 };
 
 const HabitFolderList = ({
   folderHabits,
   unfolderedHabits,
   isHabitCompletedToday,
+  getLastRelapseDate,
   onDeleteHabit,
   onEditHabit,
   onEditFolder,
   onDeleteFolder,
   onAddHabit,
+  onRelapseComplete
 }: HabitFolderListProps) => {
   return (
-    <div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Отслеживаемые привычки</h2>
-      
-      {/* Folders */}
-      {folderHabits.map(({ folder, habits }) => (
-        <FolderCard
-          key={folder.id}
-          folder={folder}
-          habits={habits}
-          isCompleted={isHabitCompletedToday}
-          onDeleteHabit={onDeleteHabit}
-          onEditHabit={onEditHabit}
-          onEditFolder={onEditFolder}
-          onDeleteFolder={onDeleteFolder}
-          onAddHabit={onAddHabit}
-        />
-      ))}
-      
-      {/* Unfiled habits */}
+    <div className="space-y-8">
+      {/* Habits without folders */}
       {unfolderedHabits.length > 0 && (
-        <div className="mt-4">
-          <h3 className="text-md font-medium text-gray-700 mb-3">Без папки</h3>
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Общие привычки</h2>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={() => onAddHabit()}
+            >
+              <FilePlus className="w-3.5 h-3.5 mr-1" />
+              Добавить
+            </Button>
+          </div>
+          
           <HabitList
             habits={unfolderedHabits}
-            isHabitCompleted={isHabitCompletedToday}
+            isHabitCompletedToday={isHabitCompletedToday}
             onDeleteHabit={onDeleteHabit}
             onEditHabit={onEditHabit}
+            onRelapseComplete={onRelapseComplete}
+            getLastRelapseDate={getLastRelapseDate}
           />
         </div>
       )}
+      
+      {/* Folder sections */}
+      {folderHabits.map((folderWithHabits) => (
+        folderWithHabits.habits.length > 0 && (
+          <div key={folderWithHabits.folder.id}>
+            <FolderCard
+              folder={folderWithHabits.folder}
+              onEdit={onEditFolder}
+              onDelete={onDeleteFolder}
+              onAddHabit={() => onAddHabit(folderWithHabits.folder.id)}
+            />
+            
+            <div className="mt-4 pl-4 border-l-2 border-gray-100">
+              <HabitList
+                habits={folderWithHabits.habits}
+                isHabitCompletedToday={isHabitCompletedToday}
+                onDeleteHabit={onDeleteHabit}
+                onEditHabit={onEditHabit}
+                onRelapseComplete={onRelapseComplete}
+                getLastRelapseDate={getLastRelapseDate}
+              />
+            </div>
+          </div>
+        )
+      ))}
     </div>
   );
 };

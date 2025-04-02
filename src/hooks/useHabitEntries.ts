@@ -2,12 +2,17 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { HabitEntryType } from "@/types/habit";
 
-export type HabitEntry = HabitEntryType;
+export type HabitEntryType = {
+  id: string;
+  habit_id: string;
+  completed_at: string;
+  notes: string | null;
+  is_relapse: boolean;
+};
 
 export const useHabitEntries = () => {
-  const [habitEntries, setHabitEntries] = useState<HabitEntry[]>([]);
+  const [habitEntries, setHabitEntries] = useState<HabitEntryType[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -23,7 +28,7 @@ export const useHabitEntries = () => {
       }
 
       if (data) {
-        setHabitEntries(data);
+        setHabitEntries(data as HabitEntryType[]);
       }
     } catch (error: any) {
       toast({

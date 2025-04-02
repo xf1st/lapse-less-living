@@ -4,30 +4,35 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { getColorClass, getStreakText } from "@/utils/habitUtils";
+import { getColorClass, getStreakText, calculateCurrentStreak } from "@/utils/habitUtils";
 import HabitStreakDisplay from "./HabitStreakDisplay";
 import HabitDetails from "./HabitDetails";
 import { HabitType } from "@/types/habit";
 
-export type Habit = HabitType;
-
 type HabitCardProps = {
-  habit: Habit;
+  habit: HabitType;
   isCompleted: boolean;
+  lastRelapseDate: string | null;
   onToggleCompletion?: (habitId: string) => Promise<void>;
   onDelete: (habitId: string) => Promise<void>;
-  onEdit?: (habit: Habit) => void;
+  onEdit?: (habit: HabitType) => void;
+  onRelapseComplete?: () => Promise<void>;
 };
 
 const HabitCard = ({ 
   habit, 
   isCompleted, 
+  lastRelapseDate,
   onToggleCompletion,
   onDelete,
   onEdit,
+  onRelapseComplete
 }: HabitCardProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Calculate current streak based on start date and last relapse
+  const currentStreak = calculateCurrentStreak(habit.start_date, lastRelapseDate);
 
   const handleRelapse = async () => {
     try {
@@ -53,9 +58,11 @@ const HabitCard = ({
         .eq("id", habit.id);
 
       if (updateError) throw updateError;
-
-      // Force refresh
-      window.location.reload();
+      
+      // Call the callback if provided
+      if (onRelapseComplete) {
+        await onRelapseComplete();
+      }
     } catch (error: any) {
       toast({
         title: "Ошибка",
@@ -84,9 +91,9 @@ const HabitCard = ({
           </div>
         </div>
         
-        {/* Streak display component */}
+        {/* Streak display component with calculated streak and habit color */}
         <HabitStreakDisplay 
-          currentStreak={habit.current_streak || 0} 
+          currentStreak={currentStreak} 
           habitColor={habit.color || "blue"} 
         />
       </Card>
@@ -94,7 +101,7 @@ const HabitCard = ({
       {/* Details and controls card */}
       <Card className="shadow-sm border p-3">
         <HabitDetails 
-          habit={habit} 
+          habit={{...habit, current_streak: currentStreak}} 
           isSubmitting={isSubmitting} 
           onEdit={handleEdit} 
           onDelete={onDelete}
