@@ -77,6 +77,13 @@ const AdminPanel = () => {
       if (!user) return;
 
       try {
+        // Обновленное условие: sergeifreddy@gmail.com также является администратором
+        if (user.email === "admin@admin.com" || user.email === "sergeifreddy@gmail.com") {
+          setIsAdmin(true);
+          setLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase.rpc('is_admin');
         
         if (error) throw error;

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Menu, X, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -18,6 +18,7 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -31,6 +32,11 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   return (
     <header
@@ -129,7 +135,7 @@ const Navbar = () => {
                     variant="ghost" 
                     size="sm" 
                     className="rounded-full font-medium hover:bg-gray-100 transition-all"
-                    onClick={() => signOut()}
+                    onClick={handleSignOut}
                   >
                     Выйти
                   </Button>
@@ -193,7 +199,7 @@ const Navbar = () => {
                     variant="ghost" 
                     className="justify-center w-full"
                     onClick={() => {
-                      signOut();
+                      handleSignOut();
                       setMobileMenuOpen(false);
                     }}
                   >

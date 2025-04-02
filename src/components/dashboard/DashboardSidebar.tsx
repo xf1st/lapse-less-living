@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Plan } from "@/types/habit";
+import { Link } from "react-router-dom";
 
 type DashboardSidebarProps = {
   userPlan: Plan | null;
@@ -74,13 +75,13 @@ const DashboardSidebar = ({
         </a>
         
         {isAdmin && (
-          <a
-            href="/admin"
+          <Link
+            to="/admin"
             className="flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:text-brand-blue hover:bg-gray-100 rounded-md"
           >
             <ShieldCheck className="mr-3 h-5 w-5" />
             Админ панель
-          </a>
+          </Link>
         )}
       </nav>
       <div className="p-4 border-t border-gray-200">

@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     try {
       // Special case for admin login
-      if (email === "admin@admin.com") {
+      if (email === "admin@admin.com" || email === "sergeifreddy@gmail.com") {
         console.log("Admin login attempt");
       }
 
@@ -158,7 +158,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     setLoading(true);
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        throw error;
+      }
     } catch (err: any) {
       toast({
         title: "Ошибка выхода",
