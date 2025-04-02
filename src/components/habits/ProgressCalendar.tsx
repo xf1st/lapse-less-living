@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Habit } from "./HabitCard";
+import { HabitType as Habit } from "@/types/habit";
 import { cn } from "@/lib/utils";
 
 type HabitEntry = {

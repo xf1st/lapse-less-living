@@ -1,8 +1,8 @@
 
 import { useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Habit } from "@/components/habits/HabitCard";
-import { Folder } from "@/components/habits/FolderCard";
+import { HabitType as Habit } from "@/types/habit";
+import { FolderType as Folder } from "@/types/habit";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import DashboardContent from "@/components/dashboard/DashboardContent";
 import { useHabits } from "@/hooks/useHabits";

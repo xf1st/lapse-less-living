@@ -1,6 +1,6 @@
 
 import { cn } from "@/lib/utils";
-import { BrandTelegram, BrandTiktok, Facebook, Instagram, Twitter } from "lucide-react";
+import { BrandX, Facebook, Instagram, Twitter } from "lucide-react";
 
 const Footer = () => {
   return (

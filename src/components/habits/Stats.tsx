@@ -12,7 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltipContent, ChartTooltip } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, CartesianGrid, Tooltip } from "recharts";
-import { Habit } from "./HabitCard";
+import { HabitType as Habit } from "@/types/habit";
 import { cn } from "@/lib/utils";
 
 type HabitEntry = {

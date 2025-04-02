@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Plan } from "@/types/habit";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 type DashboardMobileMenuProps = {
   userPlan: Plan | null;
@@ -25,6 +25,14 @@ const DashboardMobileMenu = ({
   signOut, 
   setShowMobileMenu 
 }: DashboardMobileMenuProps) => {
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+    setShowMobileMenu(false);
+  };
+
   return (
     <>
       <div className="mt-4 p-2 bg-blue-50 rounded-md flex items-center justify-between">
@@ -93,10 +101,7 @@ const DashboardMobileMenu = ({
         
         <Button
           variant="ghost"
-          onClick={() => {
-            signOut();
-            setShowMobileMenu(false);
-          }}
+          onClick={handleSignOut}
           className="justify-start text-gray-600 hover:text-red-500 hover:bg-red-50 mt-4"
         >
           <LogOut className="mr-2 h-5 w-5" />

@@ -156,19 +156,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
+      // Make sure session exists before trying to sign out
+      if (!session) {
+        toast({
+          title: "Внимание",
+          description: "Вы не авторизованы",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      
       const { error } = await supabase.auth.signOut();
+      
       if (error) {
         throw error;
       }
     } catch (err: any) {
+      console.error("Logout error:", err);
       toast({
         title: "Ошибка выхода",
-        description: err.message,
+        description: err.message || "Не удалось выйти из аккаунта",
         variant: "destructive",
       });
     } finally {
+      // Ensure we clear local state even if Supabase logout failed
+      setSession(null);
+      setUser(null);
       setLoading(false);
     }
   };

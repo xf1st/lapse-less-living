@@ -7,15 +7,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { getColorClass, getStreakText, calculateCurrentStreak } from "@/utils/habitUtils";
 import HabitStreakDisplay from "./HabitStreakDisplay";
 import HabitDetails from "./HabitDetails";
-import { HabitType } from "@/types/habit";
+import { HabitType as Habit } from "@/types/habit";
 
 export type HabitCardProps = {
-  habit: HabitType;
+  habit: Habit;
   isCompleted: boolean;
   lastRelapseDate: string | null;
   onToggleCompletion?: (habitId: string) => Promise<void>;
   onDelete: (habitId: string) => Promise<void>;
-  onEdit?: (habit: HabitType) => void;
+  onEdit?: (habit: Habit) => void;
   onRelapseComplete?: () => Promise<void>;
 };
 
@@ -113,4 +113,4 @@ const HabitCard = ({
 };
 
 export default HabitCard;
-export type { HabitType } from "@/types/habit";
+export type { Habit };
