@@ -158,17 +158,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       setLoading(true);
-      // Make sure session exists before trying to sign out
-      if (!session) {
-        console.log("No active session found when trying to sign out");
-        // Clear local state anyway
-        setSession(null);
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-      
       console.log("Signing out user:", user?.email);
+      
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -176,7 +167,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
       
-      console.log("Supabase sign out completed successfully");
+      // Manually clear local state to ensure UI updates
+      setSession(null);
+      setUser(null);
+      console.log("Signout completed successfully");
+      
     } catch (err: any) {
       console.error("Logout error:", err);
       toast({
@@ -186,7 +181,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
     } finally {
       // Ensure we clear local state even if Supabase logout failed
-      console.log("Clearing auth state in finally block");
       setSession(null);
       setUser(null);
       setLoading(false);
