@@ -1,78 +1,76 @@
 
-import React from "react";
-import { Menu } from "lucide-react";
+import React, { useState } from "react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import DashboardMobileMenu from "./DashboardMobileMenu";
 import { Plan } from "@/types/habit";
 
 type DashboardMobileHeaderProps = {
   userPlan: Plan | null;
   isAdmin: boolean;
-  signOut: () => void;
-  userEmail?: string | null;
+  signOut: () => Promise<void>;
+  userEmail?: string;
 };
 
-const DashboardMobileHeader = ({ 
-  userPlan, 
-  isAdmin, 
+const DashboardMobileHeader = ({
+  userPlan,
+  isAdmin,
   signOut,
-  userEmail 
+  userEmail
 }: DashboardMobileHeaderProps) => {
-  const [showMobileMenu, setShowMobileMenu] = React.useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className="md:hidden fixed top-0 left-0 right-0 z-10 bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4">
-      <a href="/" className="flex items-center gap-2">
-        <div className="w-7 h-7 rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 flex items-center justify-center">
-          <div className="w-2.5 h-2.5 rounded-full bg-white"></div>
+    <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-30 md:hidden">
+      <div className="flex items-center">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="mr-2"
+          onClick={() => setIsMenuOpen(true)}
+        >
+          <Menu className="h-6 w-6" />
+        </Button>
+        <div className="flex items-center">
+          <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 flex items-center justify-center">
+            <div className="w-2 h-2 rounded-full bg-white"></div>
+          </div>
+          <span className="ml-2 font-semibold text-lg bg-gradient-to-r from-brand-darkBlue to-brand-blue bg-clip-text text-transparent">
+            LapseLess
+          </span>
         </div>
-        <span className="font-semibold text-lg bg-gradient-to-r from-brand-darkBlue to-brand-blue bg-clip-text text-transparent">
-          LapseLess
-        </span>
-      </a>
+      </div>
 
-      <Sheet
-        open={showMobileMenu}
-        onOpenChange={setShowMobileMenu}
-      >
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <Menu />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left">
-          <SheetHeader>
-            <SheetTitle>
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 flex items-center justify-center">
-                  <div className="w-2.5 h-2.5 rounded-full bg-white"></div>
-                </div>
-                <span className="font-semibold text-lg bg-gradient-to-r from-brand-darkBlue to-brand-blue bg-clip-text text-transparent">
-                  LapseLess
-                </span>
+      <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+        <SheetContent side="left" className="sm:max-w-xs p-0">
+          <div className="flex h-16 items-center border-b px-6">
+            <div className="flex items-center flex-1">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-white"></div>
               </div>
-            </SheetTitle>
-            <SheetDescription>
-              {userEmail}
-            </SheetDescription>
-          </SheetHeader>
+              <span className="ml-2 font-semibold text-lg bg-gradient-to-r from-brand-darkBlue to-brand-blue bg-clip-text text-transparent">
+                LapseLess
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
           <DashboardMobileMenu 
             userPlan={userPlan} 
             isAdmin={isAdmin} 
             signOut={signOut} 
-            setShowMobileMenu={setShowMobileMenu} 
+            userEmail={userEmail}
+            onClose={() => setIsMenuOpen(false)}
           />
         </SheetContent>
       </Sheet>
-    </div>
+    </header>
   );
 };
 

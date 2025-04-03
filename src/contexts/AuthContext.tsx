@@ -13,6 +13,7 @@ type AuthContextType = {
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   error: string | null;
+  isAdmin: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -31,6 +33,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log("Auth state changed:", event);
         setSession(newSession);
         setUser(newSession?.user ?? null);
+
+        // Check admin status whenever the session changes
+        if (newSession?.user) {
+          checkAdminStatus(newSession.user);
+        } else {
+          setIsAdmin(false);
+        }
 
         if (event === "SIGNED_IN") {
           toast({
@@ -50,11 +59,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
+      
+      // Check admin status for existing session
+      if (currentSession?.user) {
+        checkAdminStatus(currentSession.user);
+      }
+      
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, [toast]);
+
+  const checkAdminStatus = async (user: User) => {
+    try {
+      // Allow specific admin emails
+      if (user.email === "admin@admin.com" || user.email === "sergeifreddy@gmail.com") {
+        console.log("Admin access granted for:", user.email);
+        setIsAdmin(true);
+        return;
+      }
+
+      // Check database for admin role
+      const { data, error } = await supabase.rpc('is_admin');
+      
+      if (error) throw error;
+      
+      setIsAdmin(!!data);
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+      setIsAdmin(false);
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);
@@ -170,6 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Manually clear local state to ensure UI updates
       setSession(null);
       setUser(null);
+      setIsAdmin(false);
       console.log("Signout completed successfully");
       
     } catch (err: any) {
@@ -183,6 +220,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Ensure we clear local state even if Supabase logout failed
       setSession(null);
       setUser(null);
+      setIsAdmin(false);
       setLoading(false);
     }
   };
@@ -198,6 +236,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signInWithGoogle,
         signOut,
         error,
+        isAdmin,
       }}
     >
       {children}
