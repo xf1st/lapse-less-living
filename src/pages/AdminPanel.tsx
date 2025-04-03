@@ -56,29 +56,48 @@ const AdminPanel = () => {
       setLoading(true);
       console.log("Fetching users...");
       
-      // Check if user is admin with RPC
-      const { data: adminCheck, error: adminCheckError } = await supabase.rpc('is_admin');
+      // Check if user is admin using the is_admin RPC function
+      const { data: isAdminCheck, error: adminCheckError } = await supabase.rpc('is_admin');
       
       if (adminCheckError) {
         console.error("Error checking admin status:", adminCheckError);
+        throw adminCheckError;
       }
       
-      console.log("Admin check result:", adminCheck);
+      console.log("Admin check result:", isAdminCheck);
+      
+      if (!isAdminCheck) {
+        throw new Error("User not allowed");
+      }
       
       // Fetch users with the get_all_users RPC function
-      const { data: userData, error: userDataError } = await supabase.rpc('get_all_users');
+      // Type assertion to handle the expected return type
+      const { data: userData, error: userDataError } = await supabase.rpc('get_all_users') as {
+        data: Array<{ id: string; email: string; last_sign_in_at: string }> | null;
+        error: any;
+      };
       
       if (userDataError) {
+        console.error("Error fetching users data:", userDataError);
         throw userDataError;
       }
       
+      console.log("Fetched user data:", userData);
+      
+      // Fetch habits data to count habits per user
       const { data: habitsData, error: habitsError } = await supabase
         .from("habits")
         .select("user_id, plan_id")
         .is('deleted_at', null);
         
-      if (habitsError) throw habitsError;
+      if (habitsError) {
+        console.error("Error fetching habits data:", habitsError);
+        throw habitsError;
+      }
       
+      console.log("Fetched habits data:", habitsData);
+      
+      // Count habits per user and get the plan
       const habitsCount: Record<string, number> = {};
       const userPlans: Record<string, string> = {};
       
@@ -91,9 +110,11 @@ const AdminPanel = () => {
         });
       }
       
-      if (userData) {
-        // Since userData is now an array of objects with the correct type from the function
-        const combinedUsers: UserProfile[] = userData.map((authUser: any) => ({
+      // Check if users were fetched successfully
+      if (userData && Array.isArray(userData)) {
+        console.log("Mapping user data to UserProfile objects...");
+        
+        const combinedUsers: UserProfile[] = userData.map((authUser) => ({
           id: authUser.id,
           email: authUser.email || 'No email',
           last_sign_in_at: authUser.last_sign_in_at || 'Never',
@@ -101,8 +122,10 @@ const AdminPanel = () => {
           habits_count: habitsCount[authUser.id] || 0
         }));
         
+        console.log("Combined users data:", combinedUsers);
         setUsers(combinedUsers);
       } else {
+        console.warn("No user data returned, using fallback mock data");
         // Fallback to mock data if no users were returned
         const mockUsers: UserProfile[] = [
           {
