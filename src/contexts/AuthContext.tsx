@@ -73,19 +73,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAdminStatus = async (user: User) => {
     try {
-      // Allow specific admin emails
-      if (user.email === "admin@admin.com" || user.email === "sergeifreddy@gmail.com") {
+      // Check for hardcoded admin emails
+      const adminEmails = ["admin@admin.com", "sergeifreddy@gmail.com"];
+      
+      if (adminEmails.includes(user.email || '')) {
         console.log("Admin access granted for:", user.email);
         setIsAdmin(true);
         return;
       }
 
-      // Check database for admin role
+      // Check database for admin role as backup
       const { data, error } = await supabase.rpc('is_admin');
       
-      if (error) throw error;
-      
-      setIsAdmin(!!data);
+      if (error) {
+        console.error("Error checking admin status through RPC:", error);
+        // Try a direct check with the admin_users table
+        const { data: adminCheck, error: adminCheckError } = await supabase
+          .from('admin_users')
+          .select('id')
+          .eq('id', user.id)
+          .single();
+        
+        if (adminCheckError) {
+          console.error("Error checking admin_users table:", adminCheckError);
+          throw adminCheckError;
+        }
+        
+        setIsAdmin(!!adminCheck);
+      } else {
+        setIsAdmin(!!data);
+      }
     } catch (error) {
       console.error("Error checking admin status:", error);
       setIsAdmin(false);

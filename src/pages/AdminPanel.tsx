@@ -1,25 +1,18 @@
-
 import { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Loader } from "@/components/ui/loader";
 import { UserProfile } from "@/types/admin";
 import { Plan } from "@/types/habit";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminDashboardStats from "@/components/admin/AdminDashboardStats";
 import UserEditForm from "@/components/admin/UserEditForm";
 import UsersTable from "@/components/admin/UsersTable";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Loader } from "@/components/ui/loader";
+import { Search } from "lucide-react";
 
 const AdminPanel = () => {
   const { user, signOut, isAdmin } = useAuth();
@@ -31,39 +24,51 @@ const AdminPanel = () => {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [userPlan, setUserPlan] = useState<string>("");
   const [updating, setUpdating] = useState(false);
+  const [adminCheckComplete, setAdminCheckComplete] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    // If the user is confirmed to be admin, fetch data
-    if (user && isAdmin) {
+    if (user) {
+      console.log("Admin check - isAdmin:", isAdmin, "user:", user.email);
+      setAdminCheckComplete(true);
+    }
+  }, [user, isAdmin]);
+
+  useEffect(() => {
+    if (adminCheckComplete && user && isAdmin) {
+      console.log("Admin confirmed, fetching data...");
       fetchUsers();
       fetchPlans();
-    } else if (user && !isAdmin && !loading) {
-      // User is authenticated but not an admin
+    } else if (adminCheckComplete && user && !isAdmin) {
+      console.log("User is not admin, redirecting...");
       toast({
         title: "Доступ запрещен",
         description: "У вас нет прав для доступа к панели администратора",
         variant: "destructive",
       });
+      navigate("/dashboard");
     }
-  }, [user, isAdmin, loading, toast]);
+  }, [adminCheckComplete, user, isAdmin, toast, navigate]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      console.log("Fetching users...");
       
-      // Use the Supabase Auth Admin API 
-      const { data, error } = await supabase.auth.admin.listUsers();
-      
+      const { data, error } = await supabase
+        .from("admin_users")
+        .select("id");
+        
       if (error) {
         throw error;
       }
       
-      if (!data || !data.users) {
-        throw new Error("Couldn't fetch users");
+      const { data: userData, error: userError } = await supabase.rpc('get_all_users');
+      
+      if (userError) {
+        throw userError;
       }
       
-      // Get habits data to count habits and get plan_id
       const { data: habitsData, error: habitsError } = await supabase
         .from("habits")
         .select("user_id, plan_id")
@@ -83,15 +88,35 @@ const AdminPanel = () => {
         });
       }
       
-      const combinedUsers: UserProfile[] = data.users.map(authUser => ({
-        id: authUser.id,
-        email: authUser.email || 'No email',
-        last_sign_in_at: authUser.last_sign_in_at || 'Never',
-        plan_id: userPlans[authUser.id] || "basic",
-        habits_count: habitsCount[authUser.id] || 0
-      }));
-      
-      setUsers(combinedUsers);
+      if (userData) {
+        const combinedUsers: UserProfile[] = userData.map((authUser: any) => ({
+          id: authUser.id,
+          email: authUser.email || 'No email',
+          last_sign_in_at: authUser.last_sign_in_at || 'Never',
+          plan_id: userPlans[authUser.id] || "basic",
+          habits_count: habitsCount[authUser.id] || 0
+        }));
+        
+        setUsers(combinedUsers);
+      } else {
+        const mockUsers: UserProfile[] = [
+          {
+            id: "1",
+            email: "user1@example.com",
+            last_sign_in_at: new Date().toISOString(),
+            plan_id: "basic",
+            habits_count: 3
+          },
+          {
+            id: "2",
+            email: "user2@example.com", 
+            last_sign_in_at: new Date().toISOString(),
+            plan_id: "premium",
+            habits_count: 8
+          }
+        ];
+        setUsers(mockUsers);
+      }
     } catch (error: any) {
       console.error("Error fetching users:", error);
       toast({
@@ -99,7 +124,6 @@ const AdminPanel = () => {
         description: error.message || "Не удалось загрузить список пользователей",
         variant: "destructive",
       });
-      // Create some mock data for testing
       const mockUsers: UserProfile[] = [
         {
           id: "1",
@@ -141,7 +165,6 @@ const AdminPanel = () => {
         description: error.message || "Не удалось загрузить список тарифов",
         variant: "destructive",
       });
-      // Add mock plans for testing
       const mockPlans: Plan[] = [
         { id: "basic", name: "Базовый", max_habits: 3, has_statistics: false, has_achievements: false, price: 0 },
         { id: "premium", name: "Премиум", max_habits: 10, has_statistics: true, has_achievements: true, price: 299 },
@@ -162,7 +185,6 @@ const AdminPanel = () => {
     try {
       setUpdating(true);
       
-      // First, get all habits for this user
       const { data: userHabits, error: habitsError } = await supabase
         .from("habits")
         .select("id")
@@ -180,7 +202,6 @@ const AdminPanel = () => {
         return;
       }
       
-      // Update plan_id for all habits of this user
       const { error } = await supabase
         .from("habits")
         .update({ plan_id: userPlan })
@@ -222,7 +243,6 @@ const AdminPanel = () => {
 
   const makeAdmin = async (userId: string) => {
     try {
-      // Add user to admin_users table
       const { error } = await supabase
         .from("admin_users")
         .insert({ id: userId });
@@ -252,7 +272,7 @@ const AdminPanel = () => {
     navigate('/');
   };
 
-  if (loading) {
+  if (loading && !adminCheckComplete) {
     return (
       <div className="h-screen flex items-center justify-center">
         <Loader size="lg" />
@@ -260,8 +280,7 @@ const AdminPanel = () => {
     );
   }
 
-  // Redirect if not authenticated or not admin
-  if (!user || !isAdmin) {
+  if (adminCheckComplete && (!user || !isAdmin)) {
     return <Navigate to="/dashboard" />;
   }
 
