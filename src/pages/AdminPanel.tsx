@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -55,18 +56,20 @@ const AdminPanel = () => {
       setLoading(true);
       console.log("Fetching users...");
       
-      const { data, error } = await supabase
-        .from("admin_users")
-        .select("id");
-        
-      if (error) {
-        throw error;
+      // Check if user is admin with RPC
+      const { data: adminCheck, error: adminCheckError } = await supabase.rpc('is_admin');
+      
+      if (adminCheckError) {
+        console.error("Error checking admin status:", adminCheckError);
       }
       
-      const { data: userData, error: userError } = await supabase.rpc('get_all_users');
+      console.log("Admin check result:", adminCheck);
       
-      if (userError) {
-        throw userError;
+      // Fetch users with the get_all_users RPC function
+      const { data: userData, error: userDataError } = await supabase.rpc('get_all_users');
+      
+      if (userDataError) {
+        throw userDataError;
       }
       
       const { data: habitsData, error: habitsError } = await supabase
@@ -89,6 +92,7 @@ const AdminPanel = () => {
       }
       
       if (userData) {
+        // Since userData is now an array of objects with the correct type from the function
         const combinedUsers: UserProfile[] = userData.map((authUser: any) => ({
           id: authUser.id,
           email: authUser.email || 'No email',
@@ -99,6 +103,7 @@ const AdminPanel = () => {
         
         setUsers(combinedUsers);
       } else {
+        // Fallback to mock data if no users were returned
         const mockUsers: UserProfile[] = [
           {
             id: "1",
@@ -124,6 +129,7 @@ const AdminPanel = () => {
         description: error.message || "Не удалось загрузить список пользователей",
         variant: "destructive",
       });
+      // Use mock data as fallback
       const mockUsers: UserProfile[] = [
         {
           id: "1",
