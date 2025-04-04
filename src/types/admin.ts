@@ -13,3 +13,12 @@ export type AdminUserData = {
   email: string;
   last_sign_in_at: string;
 };
+
+export type PlanData = {
+  id: string;
+  name: string;
+  max_habits: number;
+  has_statistics: boolean;
+  has_achievements: boolean;
+  price: number | null;
+};
