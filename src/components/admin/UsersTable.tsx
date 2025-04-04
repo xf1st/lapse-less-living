@@ -1,7 +1,6 @@
 
 import React from "react";
 import { UserProfile } from "@/types/admin";
-import { Plan } from "@/types/habit";
 import { 
   Table, 
   TableBody, 
