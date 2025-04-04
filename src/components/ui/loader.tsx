@@ -1,24 +1,27 @@
 
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface LoaderProps extends React.HTMLAttributes<HTMLDivElement> {
-  size?: "sm" | "md" | "lg";
+interface LoaderProps {
+  size?: "xs" | "sm" | "md" | "lg";
+  className?: string;
 }
 
-export function Loader({ className, size = "md", ...props }: LoaderProps) {
+export function Loader({ size = "md", className }: LoaderProps) {
   const sizeClasses = {
-    sm: "w-5 h-5",
-    md: "w-7 h-7",
-    lg: "w-10 h-10",
+    xs: "h-3 w-3",
+    sm: "h-4 w-4",
+    md: "h-6 w-6",
+    lg: "h-8 w-8",
   };
 
   return (
-    <div className={cn("flex items-center justify-center", className)} {...props}>
-      <div className={cn("relative", sizeClasses[size])}>
-        <div className={cn("rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 flex items-center justify-center animate-spin", sizeClasses[size])}>
-          <div className={cn("w-[35%] h-[35%] rounded-full bg-white")}></div>
-        </div>
-      </div>
-    </div>
+    <Loader2 
+      className={cn(
+        "animate-spin text-muted-foreground", 
+        sizeClasses[size],
+        className
+      )} 
+    />
   );
 }

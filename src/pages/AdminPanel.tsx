@@ -8,12 +8,7 @@ import { UserProfile } from "@/types/admin";
 import { Plan } from "@/types/habit";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminDashboardStats from "@/components/admin/AdminDashboardStats";
-import UserEditForm from "@/components/admin/UserEditForm";
-import UsersTable from "@/components/admin/UsersTable";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Loader } from "@/components/ui/loader";
-import { Search } from "lucide-react";
+import AdminUserManagement from "@/components/admin/AdminUserManagement";
 
 const AdminPanel = () => {
   const { user, signOut, isAdmin } = useAuth();
@@ -21,10 +16,6 @@ const AdminPanel = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [userPlan, setUserPlan] = useState<string>("");
-  const [updating, setUpdating] = useState(false);
   const [adminCheckComplete, setAdminCheckComplete] = useState(false);
   const { toast } = useToast();
 
@@ -71,11 +62,7 @@ const AdminPanel = () => {
       }
       
       // Fetch users with the get_all_users RPC function
-      // Type assertion to handle the expected return type
-      const { data: userData, error: userDataError } = await supabase.rpc('get_all_users') as {
-        data: Array<{ id: string; email: string; last_sign_in_at: string }> | null;
-        error: any;
-      };
+      const { data: userData, error: userDataError } = await supabase.rpc('get_all_users');
       
       if (userDataError) {
         console.error("Error fetching users data:", userDataError);
@@ -127,23 +114,7 @@ const AdminPanel = () => {
       } else {
         console.warn("No user data returned, using fallback mock data");
         // Fallback to mock data if no users were returned
-        const mockUsers: UserProfile[] = [
-          {
-            id: "1",
-            email: "user1@example.com",
-            last_sign_in_at: new Date().toISOString(),
-            plan_id: "basic",
-            habits_count: 3
-          },
-          {
-            id: "2",
-            email: "user2@example.com", 
-            last_sign_in_at: new Date().toISOString(),
-            plan_id: "premium",
-            habits_count: 8
-          }
-        ];
-        setUsers(mockUsers);
+        setUsers(getMockUsers());
       }
     } catch (error: any) {
       console.error("Error fetching users:", error);
@@ -153,26 +124,29 @@ const AdminPanel = () => {
         variant: "destructive",
       });
       // Use mock data as fallback
-      const mockUsers: UserProfile[] = [
-        {
-          id: "1",
-          email: "user1@example.com",
-          last_sign_in_at: new Date().toISOString(),
-          plan_id: "basic",
-          habits_count: 3
-        },
-        {
-          id: "2",
-          email: "user2@example.com", 
-          last_sign_in_at: new Date().toISOString(),
-          plan_id: "premium",
-          habits_count: 8
-        }
-      ];
-      setUsers(mockUsers);
+      setUsers(getMockUsers());
     } finally {
       setLoading(false);
     }
+  };
+
+  const getMockUsers = (): UserProfile[] => {
+    return [
+      {
+        id: "1",
+        email: "user1@example.com",
+        last_sign_in_at: new Date().toISOString(),
+        plan_id: "basic",
+        habits_count: 3
+      },
+      {
+        id: "2",
+        email: "user2@example.com", 
+        last_sign_in_at: new Date().toISOString(),
+        plan_id: "premium",
+        habits_count: 8
+      }
+    ];
   };
 
   const fetchPlans = async () => {
@@ -194,80 +168,16 @@ const AdminPanel = () => {
         description: error.message || "Не удалось загрузить список тарифов",
         variant: "destructive",
       });
-      const mockPlans: Plan[] = [
-        { id: "basic", name: "Базовый", max_habits: 3, has_statistics: false, has_achievements: false, price: 0 },
-        { id: "premium", name: "Премиум", max_habits: 10, has_statistics: true, has_achievements: true, price: 299 },
-        { id: "pro", name: "Профессиональный", max_habits: 30, has_statistics: true, has_achievements: true, price: 499 }
-      ];
-      setPlans(mockPlans);
+      setPlans(getMockPlans());
     }
   };
 
-  const selectUser = (user: UserProfile) => {
-    setSelectedUser(user);
-    setUserPlan(user.plan_id);
-  };
-
-  const updateUserPlan = async () => {
-    if (!selectedUser) return;
-    
-    try {
-      setUpdating(true);
-      
-      const { data: userHabits, error: habitsError } = await supabase
-        .from("habits")
-        .select("id")
-        .eq("user_id", selectedUser.id);
-        
-      if (habitsError) throw habitsError;
-      
-      if (!userHabits || userHabits.length === 0) {
-        toast({
-          title: "Информация",
-          description: "У пользователя нет привычек для обновления",
-        });
-        setUpdating(false);
-        setSelectedUser(null);
-        return;
-      }
-      
-      const { error } = await supabase
-        .from("habits")
-        .update({ plan_id: userPlan })
-        .eq("user_id", selectedUser.id);
-        
-      if (error) throw error;
-      
-      toast({
-        title: "Тариф обновлен",
-        description: `Тариф для пользователя ${selectedUser.email} обновлен успешно`,
-      });
-      
-      setUsers(users.map(u => 
-        u.id === selectedUser.id ? { ...u, plan_id: userPlan } : u
-      ));
-      
-      setSelectedUser(null);
-    } catch (error: any) {
-      console.error("Error updating user plan:", error);
-      toast({
-        title: "Ошибка обновления тарифа",
-        description: error.message || "Не удалось обновить тариф пользователя",
-        variant: "destructive",
-      });
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const cancelEdit = () => {
-    setSelectedUser(null);
-    setUserPlan("");
-  };
-
-  const getPlanName = (planId: string) => {
-    const plan = plans.find(p => p.id === planId);
-    return plan ? plan.name : planId;
+  const getMockPlans = (): Plan[] => {
+    return [
+      { id: "basic", name: "Базовый", max_habits: 3, has_statistics: false, has_achievements: false, price: 0 },
+      { id: "premium", name: "Премиум", max_habits: 10, has_statistics: true, has_achievements: true, price: 299 },
+      { id: "pro", name: "Профессиональный", max_habits: 30, has_statistics: true, has_achievements: true, price: 499 }
+    ];
   };
 
   const makeAdmin = async (userId: string) => {
@@ -291,10 +201,6 @@ const AdminPanel = () => {
       });
     }
   };
-
-  const filteredUsers = users.filter(user => 
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const handleSignOut = async () => {
     await signOut();
@@ -327,46 +233,12 @@ const AdminPanel = () => {
 
         <AdminDashboardStats users={users} plans={plans} />
 
-        {selectedUser && (
-          <UserEditForm
-            selectedUser={selectedUser}
-            userPlan={userPlan}
-            setUserPlan={setUserPlan}
-            plans={plans}
-            updating={updating}
-            updateUserPlan={updateUserPlan}
-            cancelEdit={cancelEdit}
-            getPlanName={getPlanName}
-          />
-        )}
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Управление пользователями</CardTitle>
-            <CardDescription>
-              Просмотр и редактирование информации о пользователях
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4 relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input 
-                placeholder="Поиск по email" 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            
-            <UsersTable 
-              filteredUsers={filteredUsers}
-              loading={loading}
-              getPlanName={getPlanName}
-              selectUser={selectUser}
-              makeAdmin={makeAdmin}
-            />
-          </CardContent>
-        </Card>
+        <AdminUserManagement 
+          users={users} 
+          plans={plans} 
+          loading={loading} 
+          makeAdmin={makeAdmin}
+        />
       </main>
     </div>
   );
