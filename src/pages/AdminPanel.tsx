@@ -9,6 +9,7 @@ import { Plan } from "@/types/habit";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminDashboardStats from "@/components/admin/AdminDashboardStats";
 import AdminUserManagement from "@/components/admin/AdminUserManagement";
+import { Loader } from "@/components/ui/loader";
 
 const AdminPanel = () => {
   const { user, signOut, isAdmin } = useAuth();
