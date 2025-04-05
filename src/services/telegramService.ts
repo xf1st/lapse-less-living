@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-// Тип для объекта Telegram WebApp, который будет доступен в глобальном объекте window
+// Type for the Telegram WebApp object available in the global window object
 declare global {
   interface Window {
     Telegram: {
@@ -43,12 +43,12 @@ declare global {
   }
 }
 
-// Проверяем, запущено ли приложение как Telegram Mini App
+// Check if the app is running as a Telegram Mini App
 export const isTelegramWebApp = (): boolean => {
   return !!window.Telegram?.WebApp;
 };
 
-// Получаем данные пользователя из Telegram
+// Get user data from Telegram
 export const getTelegramUserData = () => {
   if (!isTelegramWebApp()) {
     console.warn("Not running in Telegram WebApp");
@@ -58,7 +58,7 @@ export const getTelegramUserData = () => {
   return window.Telegram.WebApp.initDataUnsafe.user;
 };
 
-// Авторизация пользователя через Telegram в системе
+// Authorize user through Telegram in the system
 export const authWithTelegram = async () => {
   try {
     if (!isTelegramWebApp()) {
@@ -70,33 +70,33 @@ export const authWithTelegram = async () => {
       throw new Error("Telegram user data not available");
     }
     
-    // Проверяем, существует ли пользователь с таким telegram_id
+    // Check if a user with this telegram_id exists
     const { data: existingProfile } = await supabase
       .from("profiles")
       .select("*")
       .eq("telegram_id", telegramUser.id.toString())
       .single();
     
-    // Если существует - авторизуем через магическую ссылку
+    // If exists, authorize via magic link
     if (existingProfile) {
-      // Используем RPC для вызова нашей SQL-функции
-      const { data: userData, error: userError } = await supabase
+      // Use RPC to call our SQL function with a direct call
+      const { data, error } = await supabase
         .rpc('get_user_email_by_telegram_id', { 
           telegram_id_param: telegramUser.id.toString() 
         });
       
-      if (userError || !userData || userData.length === 0) {
-        console.error("Error getting user email:", userError);
+      if (error || !data || data.length === 0) {
+        console.error("Error getting user email:", error);
         return { 
           success: false, 
           message: "Не удалось найти информацию о пользователе" 
         };
       }
       
-      const userEmail = userData[0]?.email;
+      const userEmail = data[0]?.email;
       
       if (userEmail) {
-        // Отправляем магическую ссылку и авторизуем сразу же
+        // Send magic link and authorize immediately
         await supabase.auth.signInWithOtp({
           email: userEmail,
           options: {
@@ -108,7 +108,7 @@ export const authWithTelegram = async () => {
       }
     }
     
-    // Если пользователя нет, показываем сообщение о том, что нужно синхронизировать аккаунт
+    // If the user doesn't exist, show a message about syncing the account
     return { 
       success: false, 
       isNewUser: true,
@@ -121,7 +121,7 @@ export const authWithTelegram = async () => {
   }
 };
 
-// Синхронизация аккаунта Telegram с существующим аккаунтом
+// Sync Telegram account with existing account
 export const syncTelegramWithExistingAccount = async (email: string, password: string) => {
   try {
     if (!isTelegramWebApp()) {
@@ -133,7 +133,7 @@ export const syncTelegramWithExistingAccount = async (email: string, password: s
       throw new Error("Telegram user data not available");
     }
     
-    // Авторизуемся по email/password
+    // Authenticate with email/password
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -144,7 +144,7 @@ export const syncTelegramWithExistingAccount = async (email: string, password: s
     }
     
     if (authData?.user) {
-      // Обновляем профиль пользователя, добавляя telegram_id
+      // Update user profile, adding telegram_id
       const { error: updateError } = await supabase
         .from("profiles")
         .update({
