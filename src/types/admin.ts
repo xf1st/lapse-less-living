@@ -5,7 +5,9 @@ export type UserProfile = {
   last_sign_in_at: string;
   plan_id: string;
   habits_count: number;
-  is_admin?: boolean; // Add this new field
+  is_admin?: boolean;
+  telegram_id?: string; // Добавлено поле для Telegram ID
+  username?: string;
 };
 
 export type AdminUserData = {

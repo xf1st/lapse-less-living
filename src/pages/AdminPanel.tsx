@@ -1,17 +1,17 @@
 
 import React from "react";
-import AdminPageWrapper from "@/components/admin/AdminPageWrapper";
 import UsersList from "@/components/admin/UsersList";
 import UserDetails from "@/components/admin/UserDetails";
 import PlansList from "@/components/admin/PlansList";
 import { useAdmin } from "@/components/admin/AdminContext";
 import { Users, ShieldCheck } from "lucide-react";
+import AdminDataProvider from "@/components/admin/AdminDataProvider";
 
 const AdminPanel: React.FC = () => {
   const { selectedUser, error } = useAdmin();
 
   return (
-    <AdminPageWrapper>
+    <AdminDataProvider>
       <div className="container mx-auto py-8 px-4">
         <div className="flex items-center mb-6">
           <ShieldCheck className="w-8 h-8 text-blue-600 mr-3" />
@@ -36,7 +36,7 @@ const AdminPanel: React.FC = () => {
 
         <PlansList />
       </div>
-    </AdminPageWrapper>
+    </AdminDataProvider>
   );
 };
 
