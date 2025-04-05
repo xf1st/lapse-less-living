@@ -44,15 +44,15 @@ export const fetchPlans = async (): Promise<PlanData[]> => {
 // Функция для получения детальной информации о пользователе
 export const fetchUserDetails = async (userId: string): Promise<UserProfile | null> => {
   try {
-    // Получаем основную информацию о пользователе
-    const { data: userData, error: userError } = await supabase.rpc("get_all_users");
+    // Используем обновленную RPC-функцию для получения пользователей
+    const { data: usersData, error: userError } = await supabase.rpc("get_all_users");
     
     if (userError) {
       console.error("Error fetching user data:", userError);
       throw userError;
     }
     
-    const user = userData.find((u: AdminUserData) => u.id === userId);
+    const user = usersData.find((u: AdminUserData) => u.id === userId);
     
     if (!user) return null;
     

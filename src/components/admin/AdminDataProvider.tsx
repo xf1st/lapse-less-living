@@ -20,7 +20,6 @@ const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }
       
       try {
         setLoading(true);
-        console.log("Admin check result:", isAdmin);
         
         // Загружаем пользователей
         console.log("Fetching users...");
