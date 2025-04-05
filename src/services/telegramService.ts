@@ -79,14 +79,13 @@ export const authWithTelegram = async () => {
     
     // Если существует - авторизуем через магическую ссылку
     if (existingProfile) {
-      // Используем RPC вызов или другой метод для получения email пользователя
-      // Нам нужно получить email для авторизации
+      // Используем RPC для вызова нашей SQL-функции
       const { data: userData, error: userError } = await supabase
         .rpc('get_user_email_by_telegram_id', { 
           telegram_id_param: telegramUser.id.toString() 
         });
       
-      if (userError || !userData) {
+      if (userError || !userData || userData.length === 0) {
         console.error("Error getting user email:", userError);
         return { 
           success: false, 
@@ -94,10 +93,12 @@ export const authWithTelegram = async () => {
         };
       }
       
-      if (userData.email) {
+      const userEmail = userData[0]?.email;
+      
+      if (userEmail) {
         // Отправляем магическую ссылку и авторизуем сразу же
         await supabase.auth.signInWithOtp({
-          email: userData.email,
+          email: userEmail,
           options: {
             shouldCreateUser: false,
           }

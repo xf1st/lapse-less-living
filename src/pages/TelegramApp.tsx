@@ -19,6 +19,7 @@ import {
   syncTelegramWithExistingAccount
 } from "@/services/telegramService";
 import { useToast } from "@/hooks/use-toast";
+import { useHabits } from "@/hooks/useHabits";
 import DashboardContent from "@/components/dashboard/DashboardContent";
 
 const TelegramApp: React.FC = () => {
@@ -30,6 +31,22 @@ const TelegramApp: React.FC = () => {
   const [password, setPassword] = useState("");
   const [syncLoading, setSyncLoading] = useState(false);
   const { toast } = useToast();
+  
+  // Используем хук useHabits для доступа к функциям и данным о привычках
+  const {
+    habits,
+    folders,
+    habitEntries,
+    userPlan,
+    loading: habitsLoading,
+    fetchHabits,
+    fetchFolders,
+    fetchHabitEntries,
+    deleteHabit,
+    deleteFolder,
+    isHabitCompletedToday,
+    getLastRelapseDate
+  } = useHabits(user?.id);
 
   useEffect(() => {
     // Проверяем, запущено ли приложение в Telegram
@@ -106,11 +123,56 @@ const TelegramApp: React.FC = () => {
     setSyncLoading(false);
   };
 
-  if (loading || authLoading) {
+  if (loading || authLoading || habitsLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <Loader gradient size="lg" />
         <p className="mt-4 text-gray-500">Загрузка приложения...</p>
+      </div>
+    );
+  }
+
+  // Пользователь авторизован - показываем дашборд
+  if (user) {
+    const createHabit = (folderId?: string) => {
+      // Заглушка для функции создания привычки в режиме телеграм
+      console.log("Создание привычки в telegram app", folderId);
+    };
+    
+    const createFolder = () => {
+      // Заглушка для функции создания папки в режиме телеграм
+      console.log("Создание папки в telegram app");
+    };
+    
+    const editHabitHandler = (habit: any) => {
+      // Заглушка для функции редактирования привычки
+      console.log("Редактирование привычки", habit);
+    };
+    
+    const editFolderHandler = (folder: any) => {
+      // Заглушка для функции редактирования папки
+      console.log("Редактирование папки", folder); 
+    };
+    
+    return (
+      <div className="p-4">
+        <DashboardContent
+          habits={habits}
+          folders={folders}
+          habitEntries={habitEntries}
+          userPlan={userPlan}
+          loading={habitsLoading}
+          createHabit={createHabit}
+          createFolder={createFolder}
+          isHabitCompletedToday={isHabitCompletedToday}
+          getLastRelapseDate={getLastRelapseDate}
+          deleteHabit={deleteHabit}
+          editHabitHandler={editHabitHandler}
+          editFolderHandler={editFolderHandler}
+          deleteFolder={deleteFolder}
+          fetchHabitEntries={fetchHabitEntries}
+          telegramMode={true}
+        />
       </div>
     );
   }
@@ -128,15 +190,6 @@ const TelegramApp: React.FC = () => {
             </CardDescription>
           </CardHeader>
         </Card>
-      </div>
-    );
-  }
-
-  // Если пользователь авторизован - показываем дашборд
-  if (user) {
-    return (
-      <div className="p-4">
-        <DashboardContent telegramMode={true} />
       </div>
     );
   }

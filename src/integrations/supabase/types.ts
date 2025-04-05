@@ -208,18 +208,21 @@ export type Database = {
         Row: {
           avatar_url: string | null
           id: string
+          telegram_id: string | null
           updated_at: string | null
           username: string | null
         }
         Insert: {
           avatar_url?: string | null
           id: string
+          telegram_id?: string | null
           updated_at?: string | null
           username?: string | null
         }
         Update: {
           avatar_url?: string | null
           id?: string
+          telegram_id?: string | null
           updated_at?: string | null
           username?: string | null
         }
@@ -236,6 +239,14 @@ export type Database = {
           id: string
           email: string
           last_sign_in_at: string
+        }[]
+      }
+      get_user_email_by_telegram_id: {
+        Args: {
+          telegram_id_param: string
+        }
+        Returns: {
+          email: string
         }[]
       }
       is_admin: {
