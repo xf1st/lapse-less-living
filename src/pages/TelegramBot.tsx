@@ -43,7 +43,7 @@ const TelegramBot: React.FC = () => {
             <div className="bg-gray-50 p-3 rounded-md">
               <p className="font-medium">Токен бота:</p>
               <p className="text-sm text-gray-500 break-all mt-1">
-                7412272055:AAEWji26UKcDd1jrBP1L03fON6jD_-i_jno
+                *************************************************
               </p>
               <p className="text-xs text-red-500 mt-2">
                 *Храните токен в безопасности! В продакшене рекомендуется использовать переменные окружения.
@@ -92,7 +92,7 @@ const TelegramBot: React.FC = () => {
             <li>Отправьте команду /mybots и выберите @LapseLessBot</li>
             <li>Нажмите "Bot Settings" → "Menu Button" → "Configure menu button"</li>
             <li>Установите текст кнопки: "Открыть приложение"</li>
-            <li>Установите URL для Mini App: https://05a5cf3b-542f-471d-a2fc-4d9fe4e56cdb.lovableproject.com/telegram</li>
+            <li>Установите URL для Mini App: https://lapseless.ru/telegram</li>
           </ol>
         </CardContent>
         <CardFooter className="bg-gray-50 text-sm text-gray-600">
