@@ -79,32 +79,31 @@ export const authWithTelegram = async () => {
     
     // Если существует - авторизуем через магическую ссылку
     if (existingProfile) {
-      // Получаем email пользователя связанного с telegram_id
-      const { data: userData } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("telegram_id", telegramUser.id.toString())
-        .single();
+      // Используем RPC вызов или другой метод для получения email пользователя
+      // Нам нужно получить email для авторизации
+      const { data: userData, error: userError } = await supabase
+        .rpc('get_user_email_by_telegram_id', { 
+          telegram_id_param: telegramUser.id.toString() 
+        });
       
-      if (userData) {
-        // Получаем email пользователя
-        const { data: authUser } = await supabase
-          .from("auth.users")
-          .select("email")
-          .eq("id", userData.id)
-          .single();
-          
-        if (authUser?.email) {
-          // Отправляем магическую ссылку и авторизуем сразу же
-          await supabase.auth.signInWithOtp({
-            email: authUser.email,
-            options: {
-              shouldCreateUser: false,
-            }
-          });
-          
-          return { success: true, message: "Вы успешно авторизованы через Telegram" };
-        }
+      if (userError || !userData) {
+        console.error("Error getting user email:", userError);
+        return { 
+          success: false, 
+          message: "Не удалось найти информацию о пользователе" 
+        };
+      }
+      
+      if (userData.email) {
+        // Отправляем магическую ссылку и авторизуем сразу же
+        await supabase.auth.signInWithOtp({
+          email: userData.email,
+          options: {
+            shouldCreateUser: false,
+          }
+        });
+        
+        return { success: true, message: "Вы успешно авторизованы через Telegram" };
       }
     }
     

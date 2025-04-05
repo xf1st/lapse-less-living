@@ -6,7 +6,7 @@ export type UserProfile = {
   plan_id: string;
   habits_count: number;
   is_admin?: boolean;
-  telegram_id?: string; // Добавлено поле для Telegram ID
+  telegram_id?: string;
   username?: string;
 };
 

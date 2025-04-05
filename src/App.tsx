@@ -34,11 +34,7 @@ const App = () => {
   if (isLoading) {
     return (
       <div className="h-screen flex flex-col items-center justify-center">
-        <div className="w-16 h-16 relative">
-          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-brand-darkBlue to-brand-blue animate-spin blur-sm"></div>
-          <div className="absolute inset-1 rounded-full bg-white"></div>
-          <div className="absolute inset-3 rounded-full bg-gradient-to-r from-brand-darkBlue to-brand-blue"></div>
-        </div>
+        <Loader size="lg" gradient />
         <h1 className="mt-4 text-xl font-semibold bg-gradient-to-r from-brand-darkBlue to-brand-blue bg-clip-text text-transparent">
           LapseLess
         </h1>
@@ -51,7 +47,7 @@ const App = () => {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <AuthProvider>
-            <AdminProvider> {/* Глобально оборачиваем AdminProvider */}
+            <AdminProvider>
               <Toaster />
               <Sonner />
               <BrowserRouter>

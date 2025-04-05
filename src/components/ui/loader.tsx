@@ -18,10 +18,9 @@ export function Loader({ size = "md", className, gradient = false }: LoaderProps
 
   if (gradient) {
     return (
-      <div className={cn("relative", sizeClasses[size], className)}>
-        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-brand-darkBlue to-brand-blue animate-spin blur-sm"></div>
-        <div className="absolute inset-[15%] rounded-full bg-white"></div>
-        <div className="absolute inset-[30%] rounded-full bg-gradient-to-r from-brand-darkBlue to-brand-blue"></div>
+      <div className={cn("relative flex items-center justify-center", sizeClasses[size], className)}>
+        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-blue-300 animate-spin"></div>
+        <div className="absolute inset-[20%] rounded-full bg-white"></div>
       </div>
     );
   }

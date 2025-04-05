@@ -14,11 +14,7 @@ const AdminPageWrapper: React.FC<AdminPageWrapperProps> = ({ children }) => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <div className="w-12 h-12 relative">
-          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-brand-darkBlue to-brand-blue animate-spin blur-sm"></div>
-          <div className="absolute inset-1 rounded-full bg-white"></div>
-          <div className="absolute inset-3 rounded-full bg-gradient-to-r from-brand-darkBlue to-brand-blue"></div>
-        </div>
+        <Loader size="lg" gradient />
         <p className="mt-4 text-gray-500">Проверка прав доступа...</p>
       </div>
     );

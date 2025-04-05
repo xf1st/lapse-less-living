@@ -28,6 +28,7 @@ type DashboardContentProps = {
   editFolderHandler: (folder: FolderType) => void;
   deleteFolder: (folderId: string) => Promise<void>;
   fetchHabitEntries: () => Promise<void>;
+  telegramMode?: boolean; // Added the telegramMode prop with optional flag
 };
 
 const DashboardContent = ({
@@ -45,6 +46,7 @@ const DashboardContent = ({
   editFolderHandler,
   deleteFolder,
   fetchHabitEntries,
+  telegramMode = false, // Default value is false
 }: DashboardContentProps) => {
   const isMobile = useIsMobile();
   
@@ -58,21 +60,25 @@ const DashboardContent = ({
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <Loader size="lg" className="mb-4" />
+        <Loader size="lg" gradient className="mb-4" />
         <p className="text-gray-500">Загрузка привычек...</p>
       </div>
     );
   }
 
   const isBasicPlan = userPlan?.id === "basic";
-  const containerClass = isMobile ? "px-2" : "px-4 sm:px-6 md:px-8";
+  const containerClass = telegramMode 
+    ? "px-2" 
+    : (isMobile ? "px-2" : "px-4 sm:px-6 md:px-8");
 
   return (
     <div className={`max-w-7xl mx-auto py-6 ${containerClass}`}>
-      <DashboardHeader createHabit={() => createHabit()} createFolder={createFolder} />
+      {!telegramMode && (
+        <DashboardHeader createHabit={() => createHabit()} createFolder={createFolder} />
+      )}
 
       {/* Stats and Achievements Section or Promo Banner */}
-      {habits.length > 0 && (
+      {habits.length > 0 && !telegramMode && (
         <>
           {isBasicPlan ? (
             <PromoPlans />
