@@ -61,6 +61,8 @@ export const useHabitData = (getLastRelapseDate: (habitId: string) => string | n
   };
 
   const updateStreaks = useCallback(async () => {
+    const updates = [];
+    
     for (const habit of habits) {
       if (!habit.start_date) continue;
       
@@ -70,18 +72,26 @@ export const useHabitData = (getLastRelapseDate: (habitId: string) => string | n
       // Calculate current streak
       const currentStreak = calculateCurrentStreak(habit.start_date, lastRelapseDate);
       
-      // Find longest streak
+      // Find longest streak - if current streak is higher than stored longest, update it
       const longestStreak = Math.max(habit.longest_streak || 0, currentStreak);
       
       // Only update if something changed
       if (habit.current_streak !== currentStreak || habit.longest_streak !== longestStreak) {
-        await supabase
-          .from("habits")
-          .update({
-            current_streak: currentStreak,
-            longest_streak: longestStreak
-          })
-          .eq("id", habit.id);
+        try {
+          const { error } = await supabase
+            .from("habits")
+            .update({
+              current_streak: currentStreak,
+              longest_streak: longestStreak
+            })
+            .eq("id", habit.id);
+            
+          if (error) {
+            console.error("Error updating streak for habit:", habit.id, error);
+          }
+        } catch (err) {
+          console.error("Exception updating streak:", err);
+        }
       }
     }
     

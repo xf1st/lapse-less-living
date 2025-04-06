@@ -5,6 +5,11 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, BarChart3, Trophy, Calendar } from "lucide-react";
 
 const PromoPlans = () => {
+  // Currently all users have premium features, so we'll return null
+  return null;
+
+  // Original promo code kept for future reference
+  /*
   return (
     <Card className="bg-gradient-to-br from-indigo-50 to-blue-50 mb-6">
       <CardHeader className="pb-2">
@@ -40,6 +45,7 @@ const PromoPlans = () => {
       </CardContent>
     </Card>
   );
+  */
 };
 
 export default PromoPlans;

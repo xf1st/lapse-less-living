@@ -28,7 +28,7 @@ type DashboardContentProps = {
   editFolderHandler: (folder: FolderType) => void;
   deleteFolder: (folderId: string) => Promise<void>;
   fetchHabitEntries: () => Promise<void>;
-  telegramMode?: boolean; // Added the telegramMode prop with optional flag
+  telegramMode?: boolean;
 };
 
 const DashboardContent = ({
@@ -46,7 +46,7 @@ const DashboardContent = ({
   editFolderHandler,
   deleteFolder,
   fetchHabitEntries,
-  telegramMode = false, // Default value is false
+  telegramMode = false,
 }: DashboardContentProps) => {
   const isMobile = useIsMobile();
   
@@ -66,7 +66,6 @@ const DashboardContent = ({
     );
   }
 
-  const isBasicPlan = userPlan?.id === "basic";
   const containerClass = telegramMode 
     ? "px-2" 
     : (isMobile ? "px-2" : "px-4 sm:px-6 md:px-8");
@@ -77,34 +76,28 @@ const DashboardContent = ({
         <DashboardHeader createHabit={() => createHabit()} createFolder={createFolder} />
       )}
 
-      {/* Stats and Achievements Section or Promo Banner */}
+      {/* Stats and Achievements Section - visible to all users now */}
       {habits.length > 0 && !telegramMode && (
         <>
-          {isBasicPlan ? (
-            <PromoPlans />
-          ) : (
-            <>
-              <Stats 
-                habits={habits} 
-                entries={habitEntries} 
-                canViewStats={!!userPlan?.has_statistics} 
-              />
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
-                <ProgressCalendar 
-                  habits={habits} 
-                  entries={habitEntries} 
-                  onEntriesChange={fetchHabitEntries}
-                  canViewStats={!!userPlan?.has_statistics}
-                />
-                
-                <Achievements 
-                  habits={habits} 
-                  canViewAchievements={!!userPlan?.has_achievements} 
-                />
-              </div>
-            </>
-          )}
+          <Stats 
+            habits={habits} 
+            entries={habitEntries} 
+            canViewStats={true} // Always show stats
+          />
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+            <ProgressCalendar 
+              habits={habits} 
+              entries={habitEntries} 
+              onEntriesChange={fetchHabitEntries}
+              canViewStats={true} // Always show calendar
+            />
+            
+            <Achievements 
+              habits={habits} 
+              canViewAchievements={true} // Always show achievements
+            />
+          </div>
         </>
       )}
 

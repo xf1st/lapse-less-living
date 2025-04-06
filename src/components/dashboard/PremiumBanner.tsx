@@ -4,6 +4,11 @@ import { BarChart3, Calendar, Trophy, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const PremiumBanner = () => {
+  // Currently all users have premium features, so we'll return null
+  return null;
+
+  // Original banner code is kept for future reference
+  /*
   return (
     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-8 shadow-sm">
       <h3 className="text-xl font-bold text-brand-blue mb-2">Обновите до Премиум тарифа</h3>
@@ -29,6 +34,7 @@ const PremiumBanner = () => {
       </Button>
     </div>
   );
+  */
 };
 
 export default PremiumBanner;

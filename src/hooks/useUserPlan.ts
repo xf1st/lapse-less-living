@@ -9,40 +9,25 @@ export const useUserPlan = () => {
 
   const fetchUserPlan = useCallback(async () => {
     try {
-      // First, get the user's plan_id from the habits table
-      const { data: habitData, error: habitError } = await supabase
-        .from("habits")
-        .select("plan_id")
-        .limit(1);
-
-      let planId = "basic"; // Default plan
-      
-      if (!habitError && habitData && habitData.length > 0 && habitData[0].plan_id) {
-        planId = habitData[0].plan_id;
-      }
-      
-      // Then, get the plan details
-      const { data: planData, error: planError } = await supabase
-        .from("plans")
-        .select("*")
-        .eq("id", planId)
-        .single();
-
-      if (planError) {
-        throw planError;
-      }
-
-      if (planData) {
-        setUserPlan(planData);
-      }
-    } catch (error: any) {
-      // If error, set to basic plan
+      // Temporarily give everyone premium features
+      // In the future, we'll restore real plan functionality
       setUserPlan({
-        id: "basic",
-        name: "Базовый",
-        max_habits: 3,
-        has_statistics: false,
-        has_achievements: false,
+        id: "premium",
+        name: "Премиум",
+        max_habits: 999, // Unlimited for practical purposes
+        has_statistics: true,
+        has_achievements: true,
+        price: 0
+      });
+    } catch (error: any) {
+      console.error("Error fetching user plan:", error);
+      // Fallback to premium plan in case of error
+      setUserPlan({
+        id: "premium",
+        name: "Премиум",
+        max_habits: 999,
+        has_statistics: true,
+        has_achievements: true,
         price: 0
       });
     } finally {
