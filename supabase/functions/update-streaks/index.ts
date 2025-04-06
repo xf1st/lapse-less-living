@@ -13,6 +13,7 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log("Starting streak update process...")
     const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
     // Get all habits
@@ -21,6 +22,7 @@ Deno.serve(async (req) => {
       .select('*')
     
     if (habitsError) throw habitsError
+    console.log(`Found ${habits.length} habits to update`)
 
     // Get all habit entries
     const { data: entries, error: entriesError } = await supabase
@@ -28,6 +30,7 @@ Deno.serve(async (req) => {
       .select('*')
     
     if (entriesError) throw entriesError
+    console.log(`Found ${entries.length} habit entries for processing`)
 
     // Function to get the last relapse date for a habit
     const getLastRelapseDate = (habitId: string): string | null => {
@@ -54,6 +57,8 @@ Deno.serve(async (req) => {
       const currentStreak = calculateCurrentStreak(habit.start_date, lastRelapseDate)
       const longestStreak = Math.max(habit.longest_streak || 0, currentStreak)
       
+      console.log(`Habit ${habit.id}: Current streak: ${currentStreak}, Longest streak: ${longestStreak}`)
+      
       // Only update if the values have changed
       if (habit.current_streak !== currentStreak || habit.longest_streak !== longestStreak) {
         const { error: updateError } = await supabase
@@ -69,6 +74,7 @@ Deno.serve(async (req) => {
           console.error(`Error updating habit ${habit.id}:`, updateError.message)
         } else {
           updates.push(habit.id)
+          console.log(`Successfully updated habit ${habit.id}`)
         }
       }
     }
@@ -85,6 +91,7 @@ Deno.serve(async (req) => {
       }
     )
   } catch (error) {
+    console.error("Error in update-streaks function:", error)
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       {
