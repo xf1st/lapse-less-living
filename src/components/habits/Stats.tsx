@@ -192,17 +192,23 @@ const Stats = ({ habits, entries, canViewStats }: StatsProps) => {
               }}
             >
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={statsData.weekData}>
+                <BarChart 
+                  data={statsData.weekData}
+                  margin={{ top: 10, right: 10, left: -15, bottom: 0 }}
+                >
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
                   <XAxis 
                     dataKey="day" 
                     tickLine={false} 
                     axisLine={false}
+                    fontSize={12}
                   />
                   <YAxis 
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={(value) => `${value}`}
+                    width={30}
+                    fontSize={12}
                   />
                   <ChartTooltip
                     content={({ active, payload }) => {
@@ -225,12 +231,14 @@ const Stats = ({ habits, entries, canViewStats }: StatsProps) => {
                     name="Выполнено" 
                     fill="var(--color-completed)"
                     radius={[4, 4, 0, 0]}
+                    maxBarSize={50}
                   />
                   <Bar 
                     dataKey="relapses" 
                     name="Срывы" 
                     fill="var(--color-relapses)"
                     radius={[4, 4, 0, 0]}
+                    maxBarSize={50}
                   />
                 </BarChart>
               </ResponsiveContainer>

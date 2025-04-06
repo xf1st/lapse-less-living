@@ -10,6 +10,9 @@ import { AdminProvider } from "@/components/admin/AdminContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import Calendar from "./pages/Calendar";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 import TelegramApp from "./pages/TelegramApp";
@@ -55,6 +58,9 @@ const App = () => {
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/dashboard/calendar" element={<Calendar />} />
+                  <Route path="/dashboard/profile" element={<Profile />} />
+                  <Route path="/dashboard/settings" element={<Settings />} />
                   <Route path="/admin" element={<AdminPanel />} />
                   {/* Новые маршруты для Telegram */}
                   <Route path="/telegram" element={<TelegramApp />} />
