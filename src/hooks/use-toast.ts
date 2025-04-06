@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import type {
@@ -166,6 +167,31 @@ function toast({ ...props }: Toast) {
     dismiss,
     update,
   }
+}
+
+// Добавляем вспомогательные методы для удобства
+toast.success = (message: string) => {
+  return toast({ 
+    title: "Успех", 
+    description: message,
+    variant: "default" 
+  })
+}
+
+toast.error = (message: string) => {
+  return toast({ 
+    title: "Ошибка", 
+    description: message,
+    variant: "destructive" 
+  })
+}
+
+toast.info = (message: string) => {
+  return toast({ 
+    title: "Информация", 
+    description: message,
+    variant: "default" 
+  })
 }
 
 function useToast() {

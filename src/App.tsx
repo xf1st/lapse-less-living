@@ -24,8 +24,19 @@ const queryClient = new QueryClient();
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark';
+    return savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  });
 
   useEffect(() => {
+    // Set initial theme class on document
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    
     // Simulate initial app loading
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -36,7 +47,7 @@ const App = () => {
 
   if (isLoading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center">
+      <div className="h-screen flex flex-col items-center justify-center bg-white dark:bg-gray-900">
         <Loader size="lg" gradient />
         <h1 className="mt-4 text-xl font-semibold bg-gradient-to-r from-brand-darkBlue to-brand-blue bg-clip-text text-transparent">
           LapseLess

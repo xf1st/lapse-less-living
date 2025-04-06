@@ -8,10 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { User } from "lucide-react";
 
 const Profile = () => {
+  const { toast } = useToast();
   const { user } = useAuth();
   const { userPlan, loading } = useHabits(user?.id);
   
@@ -26,7 +27,10 @@ const Profile = () => {
     // This is just a placeholder - in a real app, you'd update the user profile
     setTimeout(() => {
       setIsSaving(false);
-      toast.success("Профиль успешно обновлен");
+      toast({
+        title: "Успех",
+        description: "Профиль успешно обновлен"
+      });
     }, 1000);
   };
 
@@ -39,7 +43,7 @@ const Profile = () => {
       >
         <div className="flex flex-col items-center justify-center py-12">
           <Loader size="lg" gradient className="mb-4" />
-          <p className="text-gray-500">Загрузка профиля...</p>
+          <p className="text-gray-500 dark:text-gray-400">Загрузка профиля...</p>
         </div>
       </DashboardLayout>
     );
@@ -52,22 +56,22 @@ const Profile = () => {
       createFolder={() => {}}
     >
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 md:px-8">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-6">Профиль пользователя</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Профиль пользователя</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-1">
-            <Card className="bg-white border">
+            <Card className="bg-white dark:bg-gray-800 border">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Информация</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col items-center space-y-4 py-4">
-                  <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">
+                  <div className="w-24 h-24 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
                     <User className="h-12 w-12 text-blue-500" />
                   </div>
                   <div className="text-center">
                     <h3 className="font-medium">{user?.email}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{userPlan?.name || "Базовый"} тариф</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{userPlan?.name || "Базовый"} тариф</p>
                   </div>
                 </div>
               </CardContent>
@@ -75,7 +79,7 @@ const Profile = () => {
           </div>
           
           <div className="md:col-span-2">
-            <Card className="bg-white border">
+            <Card className="bg-white dark:bg-gray-800 border">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Личные данные</CardTitle>
               </CardHeader>
@@ -88,6 +92,7 @@ const Profile = () => {
                       value={displayName} 
                       onChange={(e) => setDisplayName(e.target.value)}
                       placeholder="Ваше имя"
+                      className="dark:bg-gray-700 dark:border-gray-600"
                     />
                   </div>
                   
@@ -100,8 +105,9 @@ const Profile = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Ваш email"
                       disabled
+                      className="dark:bg-gray-700 dark:border-gray-600"
                     />
-                    <p className="text-xs text-gray-500">Email нельзя изменить</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Email нельзя изменить</p>
                   </div>
                   
                   <Button type="submit" className="w-full md:w-auto" disabled={isSaving}>
