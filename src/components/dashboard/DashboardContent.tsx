@@ -12,6 +12,7 @@ import PromoPlans from "./PromoPlans";
 import { HabitType, FolderType, Plan } from "@/types/habit";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { HabitEntryType } from "@/hooks/useHabitEntries";
+import { useTheme } from "@/hooks/useTheme";
 
 type DashboardContentProps = {
   habits: HabitType[];
@@ -49,6 +50,7 @@ const DashboardContent = ({
   telegramMode = false,
 }: DashboardContentProps) => {
   const isMobile = useIsMobile();
+  const { theme } = useTheme();
   
   // Group habits by folder
   const unfolderedHabits = habits.filter(habit => !habit.folder_id);
@@ -61,7 +63,7 @@ const DashboardContent = ({
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <Loader size="lg" gradient className="mb-4" />
-        <p className="text-gray-500">Загрузка привычек...</p>
+        <p className="text-gray-500 dark:text-gray-400">Загрузка привычек...</p>
       </div>
     );
   }
