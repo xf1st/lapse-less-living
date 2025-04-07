@@ -121,6 +121,129 @@ export const authWithTelegram = async () => {
   }
 };
 
+// Handle Telegram login widget callback
+export const handleTelegramAuthCallback = async (authData: Record<string, string>) => {
+  try {
+    // Extract user info from auth data
+    const {
+      id,
+      first_name,
+      last_name,
+      username,
+      auth_date,
+      hash,
+      ...otherData
+    } = authData;
+    
+    if (!id) {
+      return { success: false, message: "Отсутствует ID пользователя Telegram" };
+    }
+    
+    // Check if user with this telegram_id already exists
+    const { data: existingProfile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("telegram_id", id)
+      .single();
+      
+    if (existingProfile) {
+      // User exists, sign in with magic link
+      const { data: userData, error: emailError } = await supabase
+        .rpc('get_user_email_by_telegram_id', { telegram_id_param: id });
+      
+      if (emailError || !userData || userData.length === 0) {
+        return { 
+          success: false, 
+          message: "Не удалось получить данные пользователя" 
+        };
+      }
+      
+      const userEmail = userData[0]?.email;
+      
+      if (userEmail) {
+        // Send OTP login link and sign in
+        const { error: signInError } = await supabase.auth.signInWithOtp({
+          email: userEmail,
+          options: {
+            shouldCreateUser: false,
+          }
+        });
+        
+        if (signInError) {
+          return { 
+            success: false, 
+            message: signInError.message 
+          };
+        }
+        
+        return { 
+          success: true, 
+          message: "Вы успешно вошли через Telegram" 
+        };
+      }
+      
+      return {
+        success: false,
+        message: "Не удалось найти email пользователя"
+      };
+    } else {
+      // First time Telegram login - create new account
+      const generatedEmail = `telegram_${id}@lapseless.ru`;
+      const randomPassword = Math.random().toString(36).substring(2, 15) + 
+                             Math.random().toString(36).substring(2, 15);
+      
+      // Create new account
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: generatedEmail,
+        password: randomPassword
+      });
+      
+      if (signUpError) {
+        return {
+          success: false,
+          message: `Ошибка создания аккаунта: ${signUpError.message}`
+        };
+      }
+      
+      // Update profile with Telegram data
+      if (signUpData?.user) {
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({
+            telegram_id: id,
+            username: username || `${first_name}${last_name ? '_' + last_name : ''}`,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", signUpData.user.id);
+        
+        if (updateError) {
+          return {
+            success: false,
+            message: `Ошибка обновления профиля: ${updateError.message}`
+          };
+        }
+        
+        return {
+          success: true,
+          message: "Аккаунт успешно создан и привязан к Telegram"
+        };
+      }
+    }
+    
+    return {
+      success: false,
+      message: "Не удалось обработать авторизацию Telegram"
+    };
+    
+  } catch (error: any) {
+    console.error("Telegram auth callback error:", error);
+    return {
+      success: false,
+      message: error.message || "Произошла ошибка при обработке авторизации Telegram"
+    };
+  }
+};
+
 // Sync Telegram account with existing account
 export const syncTelegramWithExistingAccount = async (email: string, password: string) => {
   try {

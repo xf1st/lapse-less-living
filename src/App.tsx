@@ -18,6 +18,8 @@ import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 import TelegramApp from "./pages/TelegramApp";
 import TelegramBot from "./pages/TelegramBot";
+import TelegramAuthCallback from "./pages/TelegramAuthCallback";
+import Achievements from "./pages/Achievements";
 import { Loader } from "./components/ui/loader";
 
 // Create a new QueryClient instance
@@ -63,10 +65,12 @@ const App = () => {
                     <Route path="/dashboard/calendar" element={<Calendar />} />
                     <Route path="/dashboard/profile" element={<Profile />} />
                     <Route path="/dashboard/settings" element={<Settings />} />
+                    <Route path="/dashboard/achievements" element={<Achievements />} />
                     <Route path="/admin" element={<AdminPanel />} />
-                    {/* Новые маршруты для Telegram */}
+                    {/* Telegram routes */}
                     <Route path="/telegram" element={<TelegramApp />} />
                     <Route path="/telegram-bot" element={<TelegramBot />} />
+                    <Route path="/telegram-auth-callback" element={<TelegramAuthCallback />} />
                     {/* Redirect for any undefined dashboard routes */}
                     <Route path="/dashboard/*" element={<Navigate to="/dashboard" replace />} />
                     {/* Catch all route - Must be last */}
