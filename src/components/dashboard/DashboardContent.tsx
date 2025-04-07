@@ -83,8 +83,7 @@ const DashboardContent = ({
         <>
           <Stats 
             habits={habits} 
-            entries={habitEntries} 
-            canViewStats={true} // Always show stats
+            habitEntries={habitEntries}
           />
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">

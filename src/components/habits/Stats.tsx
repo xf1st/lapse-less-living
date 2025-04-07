@@ -40,19 +40,23 @@ const Stats = ({ habits, habitEntries }: StatsProps) => {
       const dateStr = format(day, 'yyyy-MM-dd');
       const dayName = format(day, 'E', { locale: ru });
       
-      // Count all non-relapse entries for this day
-      const completed = habitEntries.filter(
-        entry => 
-          entry.completed_at.startsWith(dateStr) && 
-          !entry.is_relapse
-      ).length;
+      // Check if habitEntries exists and is an array before using filter
+      const completed = habitEntries && Array.isArray(habitEntries) 
+        ? habitEntries.filter(
+            entry => 
+              entry.completed_at.startsWith(dateStr) && 
+              !entry.is_relapse
+          ).length
+        : 0;
       
-      // Count all relapse entries for this day
-      const relapses = habitEntries.filter(
-        entry => 
-          entry.completed_at.startsWith(dateStr) && 
-          entry.is_relapse
-      ).length;
+      // Check if habitEntries exists and is an array before using filter
+      const relapses = habitEntries && Array.isArray(habitEntries)
+        ? habitEntries.filter(
+            entry => 
+              entry.completed_at.startsWith(dateStr) && 
+              entry.is_relapse
+          ).length
+        : 0;
       
       return {
         day: dayName.charAt(0).toUpperCase() + dayName.slice(1, 3),
@@ -70,7 +74,7 @@ const Stats = ({ habits, habitEntries }: StatsProps) => {
         <CardTitle className="text-lg">Активность за неделю</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[250px] sm:h-[300px]">
+        <div className="h-[250px] sm:h-[300px] md:h-[320px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 10 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#444" : "#eee"} />
