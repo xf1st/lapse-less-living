@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Award, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HabitType } from "@/types/habit";
-import AchievementBadge from "./AchievementBadge";
+// import AchievementBadge from "@/AchievementBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type AchievementData = {
