@@ -7,7 +7,7 @@ export const useAchievements = (userId: string | undefined) => {
     if (!userId || !hasPremium) return;
     
     try {
-      // Define milestone days for achievements - now including 10-day increments
+      // Define milestone days for achievements
       const standardMilestones = [1, 7, 30, 90, 180, 365];
       const tenDayMilestones = [10, 20, 40, 50, 60, 70, 80, 100, 200, 300];
       const allMilestones = [...standardMilestones, ...tenDayMilestones].sort((a, b) => a - b);
@@ -16,6 +16,20 @@ export const useAchievements = (userId: string | undefined) => {
       const achievedMilestones = allMilestones.filter(m => currentStreak >= m);
       
       if (achievedMilestones.length > 0) {
+        // First, get all existing achievements for this habit
+        const { data: existingAchievements, error: fetchError } = await supabase
+          .from("achievements")
+          .select("type, days")
+          .eq("habit_id", habitId);
+          
+        if (fetchError) {
+          console.error("Error fetching existing achievements:", fetchError);
+          return;
+        }
+        
+        // Create a set of existing achievement types for faster lookup
+        const existingTypes = new Set(existingAchievements?.map(a => a.type) || []);
+        
         // For each achieved milestone, check if we already have an achievement
         for (const milestone of achievedMilestones) {
           // Define achievement type based on milestone
@@ -29,47 +43,38 @@ export const useAchievements = (userId: string | undefined) => {
           else if (milestone === 365) achievementType = "one_year";
           else achievementType = `days_${milestone}`;
           
-          // Check if achievement already exists
-          const { data: existingAchievements, error: checkError } = await supabase
-            .from("achievements")
-            .select("*")
-            .eq("habit_id", habitId)
-            .eq("type", achievementType);
-          
-          if (checkError) {
-            console.error("Error checking for existing achievement:", checkError);
+          // Skip if this achievement already exists
+          if (existingTypes.has(achievementType)) {
             continue;
           }
           
-          // If achievement doesn't exist, create it
-          if (!existingAchievements || existingAchievements.length === 0) {
-            // Get total achievement count for this user
-            const { data: totalAchievements, error: countError } = await supabase
-              .from("achievements")
-              .select("id")
-              .eq("user_id", userId);
-              
-            if (countError) {
-              console.error("Error counting achievements:", countError);
-              continue;
-            }
+          // Get total achievement count for this user
+          const { data: totalAchievements, error: countError } = await supabase
+            .from("achievements")
+            .select("id")
+            .eq("user_id", userId);
             
-            const achievementCount = totalAchievements?.length || 0;
-            
-            const { error: insertError } = await supabase
-              .from("achievements")
-              .insert({
-                user_id: userId,
-                habit_id: habitId,
-                type: achievementType,
-                days: milestone,
-                viewed: false,
-                achievement_number: achievementCount + 1
-              });
-            
-            if (insertError) {
-              console.error("Error creating achievement:", insertError);
-            }
+          if (countError) {
+            console.error("Error counting achievements:", countError);
+            continue;
+          }
+          
+          const achievementCount = totalAchievements?.length || 0;
+          
+          // Create the achievement
+          const { error: insertError } = await supabase
+            .from("achievements")
+            .insert({
+              user_id: userId,
+              habit_id: habitId,
+              type: achievementType,
+              days: milestone,
+              viewed: false,
+              achievement_number: achievementCount + 1
+            });
+          
+          if (insertError) {
+            console.error("Error creating achievement:", insertError);
           }
         }
       }

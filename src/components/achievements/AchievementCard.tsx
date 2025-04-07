@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Card } from "@/components/ui/card";
-import { Award, Star, Trophy, Flag, Calendar } from "lucide-react";
+import { Award, Star, Trophy, Flag, Calendar, Check } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { ru } from "date-fns/locale";
 

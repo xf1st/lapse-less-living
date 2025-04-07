@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   ShieldCheck,
+  Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Plan } from "@/types/habit";
@@ -41,6 +42,11 @@ const DashboardMobileMenu = ({
       title: "Привычки",
       icon: <Home className="h-5 w-5" />,
       href: "/dashboard",
+    },
+    {
+      title: "Достижения",
+      icon: <Award className="h-5 w-5" />,
+      href: "/dashboard/achievements",
     },
     {
       title: "Календарь",
