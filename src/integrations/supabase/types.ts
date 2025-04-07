@@ -12,6 +12,7 @@ export type Database = {
       achievements: {
         Row: {
           achieved_at: string | null
+          achievement_number: number | null
           days: number
           habit_id: string
           id: string
@@ -21,6 +22,7 @@ export type Database = {
         }
         Insert: {
           achieved_at?: string | null
+          achievement_number?: number | null
           days: number
           habit_id: string
           id?: string
@@ -30,6 +32,7 @@ export type Database = {
         }
         Update: {
           achieved_at?: string | null
+          achievement_number?: number | null
           days?: number
           habit_id?: string
           id?: string
