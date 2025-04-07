@@ -25,6 +25,26 @@ const Stats = ({ habits, habitEntries }: StatsProps) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   
+  // Calculate total metrics
+  const totalStats = useMemo(() => {
+    const currentStreaks = habits.map(h => h.current_streak || 0);
+    const longestStreaks = habits.map(h => h.longest_streak || 0);
+    
+    const currentStreak = currentStreaks.length > 0 ? Math.max(...currentStreaks) : 0;
+    const longestStreak = longestStreaks.length > 0 ? Math.max(...longestStreaks) : 0;
+    
+    // Count relapse entries
+    const relapseCount = habitEntries && Array.isArray(habitEntries) 
+      ? habitEntries.filter(entry => entry.is_relapse).length
+      : 0;
+    
+    return {
+      currentStreak,
+      longestStreak,
+      relapseCount
+    };
+  }, [habits, habitEntries]);
+  
   const weeklyData = useMemo(() => {
     // Get start of this week
     const startDate = startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -73,6 +93,23 @@ const Stats = ({ habits, habitEntries }: StatsProps) => {
       <CardHeader className="pb-2">
         <CardTitle className="text-lg">Активность за неделю</CardTitle>
       </CardHeader>
+      
+      {/* Streak summary stats */}
+      <div className="grid grid-cols-3 gap-4 px-6 py-4 bg-gray-50 border-y">
+        <div className="text-center">
+          <div className="text-lg font-bold text-blue-600">{totalStats.currentStreak}</div>
+          <div className="text-xs text-gray-500">дней текущий стрик</div>
+        </div>
+        <div className="text-center">
+          <div className="text-lg font-bold text-green-600">{totalStats.longestStreak}</div>
+          <div className="text-xs text-gray-500">дней максимальный стрик</div>
+        </div>
+        <div className="text-center">
+          <div className="text-lg font-bold text-red-600">{totalStats.relapseCount}</div>
+          <div className="text-xs text-gray-500">дней со срывами</div>
+        </div>
+      </div>
+      
       <CardContent>
         <div className="h-[250px] sm:h-[300px] md:h-[320px]">
           <ResponsiveContainer width="100%" height="100%">
