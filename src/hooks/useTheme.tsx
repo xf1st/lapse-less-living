@@ -13,18 +13,17 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Check local storage first
+    // Проверяем локальное хранилище
     const savedTheme = localStorage.getItem('theme') as Theme;
-    // If not in storage, check system preference
-    if (savedTheme) {
-      return savedTheme;
-    }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    // Если тема сохранена, используем её; иначе фиксируем светлую тему
+    return savedTheme || 'light';
   });
 
   useEffect(() => {
+    // Сохраняем текущую тему в localStorage
     localStorage.setItem('theme', theme);
-    
+
+    // Применяем класс для темной темы
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
