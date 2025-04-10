@@ -145,24 +145,24 @@ const Auth = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50 flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <a href="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 flex items-center justify-center">
-              <div className="w-3 h-3 rounded-full bg-white"></div>
-            </div>
-            <span className="font-semibold text-2xl bg-gradient-to-r from-brand-darkBlue to-brand-blue bg-clip-text text-transparent">
-              LapseLess
-            </span>
-          </a>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Добро пожаловать
-          </h1>
-          <p className="text-gray-600">
-            Войдите или зарегистрируйтесь чтобы начать отслеживать свои привычки
-          </p>
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 flex-col items-center justify-center p-4">
+  <div className="w-full max-w-md">
+    <div className="mb-8 text-center">
+      <a href="/" className="inline-flex items-center gap-2 mb-4">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 flex items-center justify-center">
+          <div className="w-3 h-3 rounded-full bg-white"></div>
         </div>
+        <span className="font-semibold text-2xl bg-gradient-to-r from-brand-darkBlue to-brand-blue bg-clip-text text-transparent">
+          LapseLess
+        </span>
+      </a>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+        Добро пожаловать
+      </h1>
+      <p className="text-gray-600 dark:text-gray-400">
+        Войдите или зарегистрируйтесь, чтобы начать отслеживать свои привычки
+      </p>
+    </div>
 
         <Card className="shadow-lg border-gray-200">
           <Tabs

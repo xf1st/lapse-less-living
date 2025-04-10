@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -25,7 +24,7 @@ const DashboardSidebar = ({
   userPlan,
   isAdmin,
   signOut,
-  userEmail
+  userEmail,
 }: DashboardSidebarProps) => {
   const location = useLocation();
   const planType = userPlan?.id ?? "basic";
@@ -55,10 +54,9 @@ const DashboardSidebar = ({
       title: "Настройки",
       icon: <Settings className="h-5 w-5" />,
       href: "/dashboard/settings",
-    }
+    },
   ];
 
-  // Add admin page if user is admin
   if (isAdmin) {
     navItems.push({
       title: "Админ панель",
@@ -68,8 +66,8 @@ const DashboardSidebar = ({
   }
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 hidden md:flex flex-col w-64 bg-white h-screen border-r border-gray-200 z-30">
-      <div className="p-4 flex items-center border-b">
+    <aside className="fixed left-0 top-0 bottom-0 hidden md:flex flex-col w-64 bg-white dark:bg-gray-900 h-screen border-r border-gray-200 dark:border-gray-700 z-30">
+      <div className="p-4 flex items-center border-b border-gray-200 dark:border-gray-700">
         <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 flex items-center justify-center">
           <div className="w-3 h-3 rounded-full bg-white"></div>
         </div>
@@ -78,9 +76,9 @@ const DashboardSidebar = ({
         </span>
       </div>
 
-      <div className="p-4 border-b">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex flex-col space-y-1">
-          <div className="text-sm font-medium">
+          <div className="text-sm font-medium text-gray-700 dark:text-gray-100">
             {userEmail || "Пользователь"}
           </div>
           <div className="inline-flex items-center">
@@ -94,7 +92,7 @@ const DashboardSidebar = ({
                   : "bg-green-500"
               )}
             ></div>
-            <span className="text-xs text-gray-600">
+            <span className="text-xs text-gray-600 dark:text-gray-400">
               {userPlan?.name || "Базовый"} тариф
             </span>
           </div>
@@ -107,26 +105,29 @@ const DashboardSidebar = ({
             key={item.href}
             to={item.href}
             className={cn(
-              "flex items-center px-4 py-3 text-gray-700 rounded-lg",
+              "flex items-center px-4 py-3 text-gray-700 dark:text-gray-100 rounded-lg",
               {
                 "bg-blue-50 text-brand-blue": location.pathname === item.href,
-                "hover:bg-gray-100": location.pathname !== item.href,
+                "hover:bg-gray-100 hover:dark:bg-gray-800":
+                  location.pathname !== item.href,
               }
             )}
           >
-            <span className="mr-3 text-gray-500">{item.icon}</span>
+            <span className="mr-3 text-gray-500 dark:text-gray-400">
+              {item.icon}
+            </span>
             {item.title}
           </Link>
         ))}
       </nav>
 
-      <div className="p-4 mt-auto border-t">
+      <div className="p-4 mt-auto border-t border-gray-200 dark:border-gray-700">
         <Button
           variant="outline"
-          className="w-full flex items-center justify-center"
+          className="w-full flex items-center justify-center text-gray-700 dark:text-gray-100"
           onClick={signOut}
         >
-          <LogOut className="mr-2 h-4 w-4" />
+          <LogOut className="mr-2 h-4 w-4 text-gray-500 dark:text-gray-400" />
           Выйти
         </Button>
       </div>

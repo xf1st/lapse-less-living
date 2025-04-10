@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,7 @@ const DashboardMobileHeader = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-30 md:hidden">
+    <header className="fixed top-0 left-0 right-0 h-16 bg-background border-b border-border flex items-center justify-between px-4 z-30 md:hidden">
       <div className="flex items-center">
         <Button
           variant="ghost"
@@ -30,7 +29,7 @@ const DashboardMobileHeader = ({
           className="mr-2"
           onClick={() => setIsMenuOpen(true)}
         >
-          <Menu className="h-6 w-6" />
+          <Menu className="h-6 w-6 text-foreground" />
         </Button>
         <div className="flex items-center">
           <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 flex items-center justify-center">
@@ -43,8 +42,8 @@ const DashboardMobileHeader = ({
       </div>
 
       <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-        <SheetContent side="left" className="sm:max-w-xs p-0">
-          <div className="flex h-16 items-center border-b px-6">
+        <SheetContent side="left" className="sm:max-w-xs p-0 bg-background">
+          <div className="flex h-16 items-center border-b border-border px-6">
             <div className="flex items-center flex-1">
               <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 flex items-center justify-center">
                 <div className="w-2 h-2 rounded-full bg-white"></div>
@@ -58,7 +57,7 @@ const DashboardMobileHeader = ({
               size="icon"
               onClick={() => setIsMenuOpen(false)}
             >
-              <X className="h-5 w-5" />
+              <X className="h-5 w-5 text-foreground" />
             </Button>
           </div>
           <DashboardMobileMenu 

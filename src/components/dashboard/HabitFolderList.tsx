@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { FilePlus } from "lucide-react";
@@ -42,18 +41,18 @@ const HabitFolderList = ({
       {unfolderedHabits.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Общие привычки</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Общие привычки</h2>
             <Button
               variant="outline"
               size="sm"
-              className="text-xs"
+              className="text-xs text-gray-700 dark:text-gray-100 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
               onClick={() => onAddHabit()}
             >
-              <FilePlus className="w-3.5 h-3.5 mr-1" />
+              <FilePlus className="w-3.5 h-3.5 mr-1 text-gray-500 dark:text-gray-400" />
               Добавить
             </Button>
           </div>
-          
+
           <HabitList
             habits={unfolderedHabits}
             isHabitCompletedToday={isHabitCompletedToday}
@@ -64,7 +63,7 @@ const HabitFolderList = ({
           />
         </div>
       )}
-      
+
       {/* Folder sections */}
       {folderHabits.map((folderWithHabits) => (
         folderWithHabits.habits.length > 0 && (
@@ -75,8 +74,8 @@ const HabitFolderList = ({
               onDelete={onDeleteFolder}
               onAddHabit={() => onAddHabit(folderWithHabits.folder.id)}
             />
-            
-            <div className="mt-4 pl-4 border-l-2 border-gray-100">
+
+            <div className="mt-4 pl-4 border-l-2 border-gray-200 dark:border-gray-700">
               <HabitList
                 habits={folderWithHabits.habits}
                 isHabitCompletedToday={isHabitCompletedToday}

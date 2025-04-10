@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Loader } from "@/components/ui/loader";
 import Stats from "@/components/habits/Stats";
@@ -73,7 +72,7 @@ const DashboardContent = ({
     : (isMobile ? "px-2" : "px-4 sm:px-6 md:px-8");
 
   return (
-    <div className={`max-w-7xl mx-auto py-6 ${containerClass}`}>
+    <div className={`max-w-7xl mx-auto py-6 ${containerClass} bg-background text-foreground`}>
       {!telegramMode && (
         <DashboardHeader createHabit={() => createHabit()} createFolder={createFolder} />
       )}
@@ -91,12 +90,12 @@ const DashboardContent = ({
               habits={habits} 
               entries={habitEntries} 
               onEntriesChange={fetchHabitEntries}
-              canViewStats={true} // Always show calendar
+              canViewStats={true}
             />
             
             <Achievements 
               habits={habits} 
-              canViewAchievements={true} // Always show achievements
+              canViewAchievements={true}
             />
           </div>
         </>

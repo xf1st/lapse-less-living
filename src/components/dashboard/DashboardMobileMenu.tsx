@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -65,7 +64,6 @@ const DashboardMobileMenu = ({
     }
   ];
 
-  // Add admin page if user is admin
   if (isAdmin) {
     navItems.push({
       title: "Админ панель",
@@ -76,9 +74,9 @@ const DashboardMobileMenu = ({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-6 border-b">
+      <div className="p-6 border-b border-border">
         <div className="flex flex-col space-y-1">
-          <div className="text-sm font-medium">
+          <div className="text-sm font-medium text-foreground">
             {userEmail || "Пользователь"}
           </div>
           <div className="inline-flex items-center">
@@ -92,7 +90,7 @@ const DashboardMobileMenu = ({
                   : "bg-green-500"
               )}
             ></div>
-            <span className="text-xs text-gray-600">
+            <span className="text-xs text-muted-foreground">
               {userPlan?.name || "Базовый"} тариф
             </span>
           </div>
@@ -106,22 +104,21 @@ const DashboardMobileMenu = ({
               key={item.href}
               to={item.href}
               className={cn(
-                "flex items-center px-3 py-2 text-gray-700 rounded-lg",
-                {
-                  "bg-blue-50 text-brand-blue": location.pathname === item.href,
-                  "hover:bg-gray-100": location.pathname !== item.href,
-                }
+                "flex items-center px-3 py-2 rounded-lg",
+                location.pathname === item.href
+                  ? "bg-accent text-accent-foreground"
+                  : "hover:bg-accent text-muted-foreground hover:text-accent-foreground"
               )}
               onClick={onClose}
             >
-              <span className="mr-3 text-gray-500">{item.icon}</span>
+              <span className="mr-3">{item.icon}</span>
               {item.title}
             </Link>
           ))}
         </div>
       </nav>
 
-      <div className="p-6 mt-auto border-t">
+      <div className="p-6 mt-auto border-t border-border">
         <Button
           variant="outline"
           className="w-full flex items-center justify-center"

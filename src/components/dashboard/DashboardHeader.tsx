@@ -1,4 +1,3 @@
-
 import React from "react";
 import { FilePlus, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,7 @@ const DashboardHeader = ({ createHabit, createFolder }: DashboardHeaderProps) =>
 
   return (
     <div className="flex items-center justify-between mb-8">
-      <h1 className={`text-2xl font-bold ${isMobile ? 'w-full text-center' : ''}`}>
+      <h1 className={`text-2xl font-bold text-foreground ${isMobile ? 'w-full text-center' : ''}`}>
         Мои привычки
       </h1>
       
