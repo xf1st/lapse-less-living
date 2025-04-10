@@ -1,5 +1,5 @@
 import React from "react";
-import { Award, Star, Trophy, Flag } from "lucide-react";
+import { Award, Star, Trophy, Flag, Check } from "lucide-react";
 
 type AchievementBadgeProps = {
   achievement: {
