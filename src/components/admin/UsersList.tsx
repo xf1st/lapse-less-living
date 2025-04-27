@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useAdmin } from "./AdminContext";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,7 @@ const UsersList: React.FC = () => {
   const handleViewUser = async (user: AdminUserData) => {
     try {
       setLoading(true);
-      const userDetails = await fetchUserDetails(user.id);
+      const userDetails = await fetchUserDetails(user.user_id);
       setSelectedUser(userDetails);
     } catch (err) {
       console.error("Error fetching user details:", err);
@@ -66,8 +65,8 @@ const UsersList: React.FC = () => {
         </TableHeader>
         <TableBody>
           {users.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell className="font-medium">{user.email}</TableCell>
+            <TableRow key={user.user_id}>
+              <TableCell className="font-medium">{user.user_email}</TableCell>
               <TableCell>
                 {user.last_sign_in_at
                   ? formatDistanceToNow(new Date(user.last_sign_in_at), {

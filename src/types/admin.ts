@@ -1,7 +1,6 @@
-
 export type UserProfile = {
-  id: string;
-  email: string;
+  user_id: string;
+  user_email: string;
   last_sign_in_at: string;
   plan_id: string;
   habits_count: number;
@@ -11,8 +10,8 @@ export type UserProfile = {
 };
 
 export type AdminUserData = {
-  id: string;
-  email: string;
+  user_id: string;
+  user_email: string;
   last_sign_in_at: string;
 };
 

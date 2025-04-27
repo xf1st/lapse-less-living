@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { AdminUserData, PlanData, UserProfile } from "@/types/admin";
 
@@ -13,7 +12,12 @@ export const fetchAdminUsers = async (): Promise<AdminUserData[]> => {
       throw error;
     }
 
-    return data || [];
+    // Преобразуем данные в нужный формат
+    return (data || []).map(user => ({
+      user_id: user.user_id,
+      user_email: user.user_email,
+      last_sign_in_at: user.last_sign_in_at
+    }));
   } catch (error) {
     console.error("Error in fetchAdminUsers:", error);
     throw error;
@@ -44,7 +48,6 @@ export const fetchPlans = async (): Promise<PlanData[]> => {
 // Функция для получения детальной информации о пользователе
 export const fetchUserDetails = async (userId: string): Promise<UserProfile | null> => {
   try {
-    // Используем обновленную RPC-функцию для получения пользователей
     const { data: usersData, error: userError } = await supabase.rpc("get_all_users");
     
     if (userError) {
@@ -52,7 +55,7 @@ export const fetchUserDetails = async (userId: string): Promise<UserProfile | nu
       throw userError;
     }
     
-    const user = usersData.find((u: AdminUserData) => u.id === userId);
+    const user = usersData.find((u: any) => u.user_id === userId);
     
     if (!user) return null;
     
@@ -84,7 +87,9 @@ export const fetchUserDetails = async (userId: string): Promise<UserProfile | nu
     const planId = habitData && habitData.length > 0 ? habitData[0].plan_id : "basic";
     
     return {
-      ...user,
+      user_id: user.user_id,
+      user_email: user.user_email,
+      last_sign_in_at: user.last_sign_in_at,
       habits_count: count || 0,
       is_admin: !!adminData,
       plan_id: planId || "basic"
