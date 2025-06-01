@@ -83,22 +83,25 @@ const Auth = () => {
             className="flex flex-col gap-6"
           >
             {/* Logo */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="w-12 h-12 rounded-3xl glass-border flex items-center justify-center bg-blue-50"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-6 h-6 stroke-blue-400"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle cx="12" cy="12" r="4" />
-                <path d="M12 2v2m0 16v2m10-10h-2M4 12H2m15.071-7.071l-1.414 1.414M6.343 17.657l-1.414 1.414m0-14.142l1.414 1.414m11.314 11.314l1.414 1.414" />
-              </svg>
-            </motion.div>
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.5 }}
+  className="w-12 h-12 rounded-3xl glass-border flex items-center justify-center bg-blue-50 cursor-pointer"
+  onClick={() => window.location.href = "/"}
+>
+  <a href="/" aria-label="Главная">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="w-6 h-6 stroke-blue-400"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2m0 16v2m10-10h-2M4 12H2m15.071-7.071l-1.414 1.414M6.343 17.657l-1.414 1.414m0-14.142l1.414 1.414m11.314 11.314l1.414 1.414" />
+    </svg>
+  </a>
+</motion.div>
 
             {/* Heading with key to reset animation */}
             <motion.h1
@@ -108,7 +111,7 @@ const Auth = () => {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-4xl md:text-5xl font-semibold leading-tight"
             >
-              <span className="font-light text-black tracking-tighter">
+              <span className="font-light text-foreground dark:text-white tracking-tighter">
                 {authMode === "signin" ? "Здраствуйте" : "Рады вас видеть"}
               </span>
             </motion.h1>
@@ -220,7 +223,7 @@ const Auth = () => {
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="custom-checkbox border-gray-300"
                   />
-                  <span className="text-black">Запомнить меня</span>
+                  <span className="text-black dark:text-white">Запомнить меня</span>
                 </label>
                 <a href="#" className="hover:underline text-blue-400 transition-colors">
                   Сбросить пароль
@@ -233,7 +236,7 @@ const Auth = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.7 }}
-                className="w-full rounded-2xl text-white bg-black py-4 font-medium hover:bg-zinc-700 transition-colors"
+                className="w-full rounded-2xl text-white dark:text-black bg-black dark:bg-white py-4 font-medium hover:bg-zinc-700 dark:hover:bg-zinc-200 transition-colors"
               >
                 {submitting && <Loader size="sm" className="mr-2" />}
                 {authMode === "signin" ? "Войти" : "Зарегистрироваться"}
@@ -260,7 +263,7 @@ const Auth = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.9 }}
-              className="w-full flex items-center justify-center gap-3 glass-border bg-zinc-200 rounded-2xl py-4 hover:bg-zinc-900/30 transition-colors"
+              className="w-full flex items-center justify-center gap-3 glass-border bg-zinc-200 dark:bg-blue-800 rounded-2xl py-4 hover:bg-zinc-900/30 dark:hover:bg-zinc-200/30 transition-colors"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
